@@ -199,6 +199,8 @@ func ListPorts() ([]*SerialPort, error) {
 	}
 	defer C.sp_free_port_list(p)
 
+	// Convert the C array into a Go slice
+	// See: https://code.google.com/p/go-wiki/wiki/cgo
 	pp := (*[1 << 30]*C.struct_sp_port)(unsafe.Pointer(p))
 
 	// count number of ports
