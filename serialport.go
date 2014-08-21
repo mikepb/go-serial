@@ -21,7 +21,7 @@ Example Usage
       log.Panic(err)
     }
 
-    var buf []byte
+    buf := make([]byte, 1)
     if c, err := p.Read(buf); err != nil {
       log.Panic(err)
     } else {
