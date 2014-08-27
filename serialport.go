@@ -32,8 +32,7 @@ Example Usage
 package serialport
 
 /*
-#cgo CFLAGS:  -g -O2 -Wall -Wextra -DSP_PRIV= -DSP_API=
-#cgo linux pkg-config: -ludev
+#cgo CFLAGS: -g -O2 -Wall -Wextra -DSP_PRIV= -DSP_API=
 #cgo darwin LDFLAGS: -framework IOKit -framework CoreFoundation
 #include <stdlib.h>
 #include "libserialport.h"
@@ -201,7 +200,7 @@ func ListPorts() ([]*SerialPort, error) {
 
 	// Convert the C array into a Go slice
 	// See: https://code.google.com/p/go-wiki/wiki/cgo
-	pp := (*[1 << 30]*C.struct_sp_port)(unsafe.Pointer(p))
+	pp := (*[1 << 15]*C.struct_sp_port)(unsafe.Pointer(p))
 
 	// count number of ports
 	c := 0
