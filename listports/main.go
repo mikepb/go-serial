@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	ports, err := serialport.ListPorts()
+	ports, err := serial.ListPorts()
 	if err != nil {
 		log.Panic(err)
 	}
@@ -36,7 +36,7 @@ func main() {
 		log.Println("\tUSB Serial Number:", port.USBSerialNumber())
 		log.Println("\tBluetooth Address:", port.BluetoothAddress())
 
-		if err := port.Open(serialport.Options{}); err != nil {
+		if err := port.Open(serial.Options{}); err != nil {
 			log.Println("\tOpen:", err)
 			continue
 		}

@@ -1,14 +1,13 @@
 # Go Serial Port
 
-Package serialport provides a binding to libserialport for accessing
-serial ports on OS X, Linux, and Windows. Serial ports are commonly
-used with embedded systems, such as the Arduino platform, and are used
-to access hardware such as RS-232.
+Package serial provides a binding to libserialport for serial port
+functionality. Serial ports are commonly used with embedded systems,
+such as the Arduino platform.
 
 
 ## Documentation
 
-https://godoc.org/github.com/mikepb/go-serialport
+https://godoc.org/github.com/mikepb/go-serial
 
 
 ## License

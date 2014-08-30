@@ -1,6 +1,6 @@
 /*
 
-Package serialport provides a binding to libserialport for serial port
+Package serial provides a binding to libserialport for serial port
 functionality. Serial ports are commonly used with embedded systems,
 such as the Arduino platform.
 
@@ -9,13 +9,13 @@ Example Usage
   package main
 
   import (
-    "github.com/mikepb/go-serialport"
+    "github.com/mikepb/go-serial"
     "log"
   )
 
   func main() {
-    p, err := serialport.Open("/dev/tty",
-    	serialport.Options{Baudrate: 115200})
+    p, err := serial.Open("/dev/tty",
+    	serial.Options{Baudrate: 115200})
   	if err != nil {
       log.Panic(err)
   	}
@@ -32,7 +32,7 @@ Example Usage
   }
 
 */
-package serialport
+package serial
 
 /*
 #cgo CFLAGS: -g -O2 -Wall -Wextra -DSP_PRIV= -DSP_API=
