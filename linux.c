@@ -27,7 +27,8 @@ SP_PRIV enum sp_return get_port_details(struct sp_port *port)
 	/* Description limited to 127 char,
 	   anything longer would not be user friendly anyway */
 	char description[128];
-	int bus, address, vid, pid = -1;
+	int bus, address;
+	unsigned int vid, pid;
 	char manufacturer[128], product[128], serial[128];
 	char baddr[32];
 	const char dir_name[] = "/sys/class/tty/%s/device/%s%s";
@@ -37,12 +38,12 @@ SP_PRIV enum sp_return get_port_details(struct sp_port *port)
 	int i, count;
 
 	if (strncmp(port->name, "/dev/", 5))
-		RETURN_ERROR(SP_ERR_ARG, "Device name not recognized (%s)", port->name);
+		RETURN_ERROR(SP_ERR_ARG, "Device name not recognized.");
 
 	snprintf(file_name, sizeof(file_name), "/sys/class/tty/%s", dev);
 	count = readlink(file_name, file_name, sizeof(file_name));
 	if (count <= 0 || count >= (int) sizeof(file_name)-1)
-		RETURN_ERROR(SP_ERR_ARG, "Device not found (%s)", port->name);
+		RETURN_ERROR(SP_ERR_ARG, "Device not found.");
 	file_name[count] = 0;
 	if (strstr(file_name, "bluetooth"))
 		port->transport = SP_TRANSPORT_BLUETOOTH;
@@ -191,7 +192,7 @@ SP_PRIV enum sp_return list_ports(struct sp_port ***list)
 		if (strstr(target, "virtual"))
 			continue;
 		snprintf(name, sizeof(name), "/dev/%s", entry.d_name);
-		DEBUG("Found device %s", name);
+		DEBUG_FMT("Found device %s", name);
 		if (strstr(target, "serial8250")) {
 			/* The serial8250 driver has a hardcoded number of ports.
 			 * The only way to tell which actually exist on a given system
@@ -216,7 +217,7 @@ SP_PRIV enum sp_return list_ports(struct sp_port ***list)
 			}
 #endif
 		}
-		DEBUG("Found port %s", name);
+		DEBUG_FMT("Found port %s", name);
 		*list = list_append(*list, name);
 		if (!list) {
 			SET_ERROR(ret, SP_ERR_MEM, "list append failed");
