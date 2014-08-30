@@ -3,6 +3,7 @@ package main
 import (
 	".."
 	"log"
+	"time"
 )
 
 func main() {
@@ -35,6 +36,9 @@ func main() {
 		log.Println("\tUSB Product:", port.USBProduct())
 		log.Println("\tUSB Serial Number:", port.USBSerialNumber())
 		log.Println("\tBluetooth Address:", port.BluetoothAddress())
+
+		log.Println("\tLocalAddr:", port.LocalAddr().String())
+		log.Println("\tRemoteAddr:", port.RemoteAddr().String())
 
 		if err := port.Open(serial.Options{}); err != nil {
 			log.Println("\tOpen:", err)
@@ -102,8 +106,9 @@ func main() {
 		}
 
 		buf := make([]byte, 1)
+
 		if c, err := port.Read(buf); err != nil {
-			log.Println("\tRead:", err)
+			log.Printf("\tRead %d: %v", c, err)
 		} else {
 			log.Printf("\tRead %d: %v", c, buf)
 		}
@@ -112,6 +117,75 @@ func main() {
 			log.Println("\tWrite:", err)
 		} else {
 			log.Printf("\tWrite %d: %v", c, buf)
+		}
+
+		if b, err := port.InputWaiting(); err != nil {
+			log.Println("\tInput Waiting: ", err)
+		} else {
+			log.Println("\tInput Waiting: ", b)
+		}
+
+		if b, err := port.OutputWaiting(); err != nil {
+			log.Println("\tOutput Waiting: ", err)
+		} else {
+			log.Println("\tOutput Waiting: ", b)
+		}
+
+		port.SetDeadline(time.Now())
+
+		if c, err := port.Read(buf); err != nil {
+			log.Printf("\tRead immediate %d: %v", c, err)
+		} else {
+			log.Printf("\tRead immediate %d: %v", c, buf)
+		}
+
+		if c, err := port.Write([]byte{0}); err != nil {
+			log.Println("\tWrite immediate:", err)
+		} else {
+			log.Printf("\tWrite immediate %d: %v", c, buf)
+		}
+
+		if err := port.SetDeadline(time.Now().Add(time.Millisecond)); err != nil {
+			log.Println("\tSetDeadline: ", err)
+		}
+
+		if c, err := port.Read(buf); err != nil {
+			log.Printf("\tRead wait %d: %v", c, err)
+		} else {
+			log.Printf("\tRead wait %d: %v", c, buf)
+		}
+
+		if err := port.SetDeadline(time.Now().Add(time.Millisecond)); err != nil {
+			log.Println("\tSetDeadline: ", err)
+		}
+
+		if c, err := port.Write([]byte{0}); err != nil {
+			log.Println("\tWrite wait:", err)
+		} else {
+			log.Printf("\tWrite wait %d: %v", c, buf)
+		}
+
+		if err := port.SetReadDeadline(time.Time{}); err != nil {
+			log.Println("\tSetReadDeadline: ", err)
+		}
+		if err := port.SetWriteDeadline(time.Time{}); err != nil {
+			log.Println("\tSetWriteDeadline: ", err)
+		}
+
+		if err := port.Sync(); err != nil {
+			log.Println("\tSync: ", err)
+		}
+		if err := port.Flush(); err != nil {
+			log.Println("\tFlush: ", err)
+		}
+		if err := port.FlushInput(); err != nil {
+			log.Println("\tFlush input: ", err)
+		}
+		if err := port.FlushOutput(); err != nil {
+			log.Println("\tFlush output: ", err)
+		}
+		if err := port.Drain(); err != nil {
+			log.Println("\tDrain: ", err)
 		}
 
 		if err := port.Close(); err != nil {

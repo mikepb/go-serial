@@ -15,10 +15,10 @@ Example Usage
 
   func main() {
     p, err := serial.Open("/dev/tty",
-    	serial.Options{Baudrate: 115200})
-  	if err != nil {
+      serial.Options{Baudrate: 115200})
+    if err != nil {
       log.Panic(err)
-  	}
+    }
 
     // optional, will automatically close when garbage collected
     defer p.Close()
@@ -45,9 +45,21 @@ import "C"
 import (
 	"errors"
 	"os"
+	"reflect"
 	"runtime"
+	"time"
 	"unsafe"
 )
+
+// Serial port options.
+type Options struct {
+	Mode        int // read, write; default is read/write
+	Baudrate    int // number of bits per second (baudrate); default is 9600
+	DataBits    int // number of data bits (5, 6, 7, 8); default is 8
+	StopBits    int // number of stop bits (1, 2); default is 1
+	Parity      int // none, odd, even, mark, space; default is none
+	FlowControl int // none, xonxoff, rtscts, dtrdsr; default is none.
+}
 
 const (
 	// Port access modes
@@ -58,11 +70,6 @@ const (
 	EVENT_RX_READY = C.SP_EVENT_RX_READY // Data received and ready to read.
 	EVENT_TX_READY = C.SP_EVENT_TX_READY // Ready to transmit new data.
 	EVENT_ERROR    = C.SP_EVENT_ERROR    // Error occured.
-
-	// Buffer selection.
-	BUF_INPUT  = C.SP_BUF_INPUT  // Input buffer.
-	BUF_OUTPUT = C.SP_BUF_OUTPUT // Output buffer.
-	BUF_BOTH   = C.SP_BUF_BOTH   // Both buffers.
 
 	// Parity settings.
 	PARITY_INVALID = C.SP_PARITY_INVALID // Special value to indicate setting should be left alone.
@@ -119,24 +126,31 @@ const (
 	TRANSPORT_BLUETOOTH = C.SP_TRANSPORT_BLUETOOTH // Bluetooh serial port adapter.
 )
 
-// Serial port options.
-type Options struct {
-	Mode        int // read, write; default is read/write
-	Baudrate    int // number of bits per second (baudrate); default is 9600
-	DataBits    int // number of data bits (5, 6, 7, 8); default is 8
-	StopBits    int // number of stop bits (1, 2); default is 1
-	Parity      int // none, odd, even, mark, space; default is none
-	FlowControl int // none, xonxoff, rtscts, dtrdsr; default is none.
-}
-
 // Serial port.
 type Port struct {
-	name   string
-	p      *C.struct_sp_port
-	c      *C.struct_sp_port_config
-	f      *os.File
-	fd     uintptr
-	opened bool
+	name          string
+	p             *C.struct_sp_port
+	c             *C.struct_sp_port_config
+	f             *os.File
+	fd            uintptr
+	opened        bool
+	readDeadline  time.Time
+	writeDeadline time.Time
+}
+
+// Implementation of net.Addr
+type Addr struct {
+	name string
+}
+
+// Implementation of net.Addr.Network()
+func (a *Addr) Network() string {
+	return a.name
+}
+
+// Implementation of net.Addr.String()
+func (a *Addr) String() string {
+	return a.name
 }
 
 var InvalidArgumentsError = errors.New("Invalid arguments were passed to the function")
@@ -563,12 +577,66 @@ func (p *Port) ApplyRawConfig() (err error) {
 
 // Implementation of io.Reader interface.
 func (p *Port) Read(b []byte) (int, error) {
-	return p.f.Read(b)
+	// use native read for no deadline
+	if p.readDeadline.IsZero() {
+		return p.f.Read(b)
+	}
+
+	// calculate milliseconds until deadline
+	delta := p.readDeadline.Sub(time.Now())
+	millis := delta.Nanoseconds() / int64(time.Millisecond)
+
+	var c int32
+
+	if millis <= 0 {
+		// call nonblocking read
+		c = C.sp_nonblocking_read(
+			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)))
+	} else {
+		// call blocking read
+		c = C.sp_blocking_read(
+			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)), C.uint(millis))
+	}
+
+	// check for error
+	if c < 0 {
+		return 0, errmsg(c)
+	}
+
+	// update slice length
+	reflect.ValueOf(&b).Elem().SetLen(int(c))
+
+	return int(c), nil
 }
 
 // Implementation of io.Writer interface.
 func (p *Port) Write(b []byte) (int, error) {
-	return p.f.Write(b)
+	if p.writeDeadline.IsZero() {
+		return p.f.Write(b)
+	}
+
+	// calculate milliseconds until deadline
+	delta := p.writeDeadline.Sub(time.Now())
+	millis := delta.Nanoseconds() / int64(time.Millisecond)
+
+	var c int32
+
+	if millis <= 0 {
+		// call nonblocking write
+		c = C.sp_nonblocking_write(
+			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)))
+	} else {
+		// call blocking write
+		c = C.sp_blocking_write(
+			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)), C.uint(millis))
+	}
+
+	// check for error
+	if c < 0 {
+		return 0, errmsg(c)
+	}
+
+	return int(c), nil
 }
 
 // WriteString is like Write, but writes the contents of string s
@@ -577,7 +645,74 @@ func (p *Port) WriteString(s string) (int, error) {
 	return p.f.WriteString(s)
 }
 
-// Sync flushes the OS write buffer.
+// Implementation of net.Conn.LocalAddr
+func (p *Port) LocalAddr() *Addr {
+	return &Addr{name: p.Name()}
+}
+
+// Implementation of net.Conn.RemoteAddr
+func (p *Port) RemoteAddr() *Addr {
+	return &Addr{name: p.Name()}
+}
+
+// Implementation of net.Conn.SetDeadline
+func (p *Port) SetDeadline(t time.Time) error {
+	p.readDeadline = t
+	p.writeDeadline = t
+	return nil
+}
+
+// Implementation of net.Conn.SetReadDeadline
+func (p *Port) SetReadDeadline(t time.Time) error {
+	p.readDeadline = t
+	return nil
+}
+
+// Implementation of net.Conn.SetWriteDeadline
+func (p *Port) SetWriteDeadline(t time.Time) error {
+	p.writeDeadline = t
+	return nil
+}
+
+// Gets the number of bytes waiting in the input buffer.
+func (p *Port) InputWaiting() (int, error) {
+	c := C.sp_input_waiting(p.p)
+	if c < 0 {
+		return 0, errmsg(c)
+	}
+	return int(c), nil
+}
+
+// Gets the number of bytes waiting in the output buffer.
+func (p *Port) OutputWaiting() (int, error) {
+	c := C.sp_output_waiting(p.p)
+	if c < 0 {
+		return 0, errmsg(c)
+	}
+	return int(c), nil
+}
+
+// Alias for Flush.
 func (p *Port) Sync() error {
-	return p.f.Sync()
+	return p.Flush()
+}
+
+// Flush serial port buffers.
+func (p *Port) Flush() error {
+	return errmsg(C.sp_flush(p.p, C.SP_BUF_BOTH))
+}
+
+// Flush serial port input buffers.
+func (p *Port) FlushInput() error {
+	return errmsg(C.sp_flush(p.p, C.SP_BUF_INPUT))
+}
+
+// Flush serial port output buffers.
+func (p *Port) FlushOutput() error {
+	return errmsg(C.sp_flush(p.p, C.SP_BUF_OUTPUT))
+}
+
+// Wait for buffered data to be transmitted.
+func (p *Port) Drain() error {
+	return errmsg(C.sp_drain(p.p))
 }
