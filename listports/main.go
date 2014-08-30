@@ -36,7 +36,7 @@ func main() {
 		log.Println("\tUSB Serial Number:", port.USBSerialNumber())
 		log.Println("\tBluetooth Address:", port.BluetoothAddress())
 
-		if err := port.Open(); err != nil {
+		if err := port.Open(serialport.Options{}); err != nil {
 			log.Println("\tOpen:", err)
 			continue
 		}
@@ -105,7 +105,13 @@ func main() {
 		if c, err := port.Read(buf); err != nil {
 			log.Println("\tRead:", err)
 		} else {
-			log.Printf("Read %d: %v", c, buf)
+			log.Printf("\tRead %d: %v", c, buf)
+		}
+
+		if c, err := port.Write([]byte{0}); err != nil {
+			log.Println("\tWrite:", err)
+		} else {
+			log.Printf("\tWrite %d: %v", c, buf)
 		}
 
 		if err := port.Close(); err != nil {
