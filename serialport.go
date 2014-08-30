@@ -1,6 +1,8 @@
 /*
-Package serialport provides a binding to libserialport for serial
-port functionality.
+
+Package serialport provides a binding to libserialport for serial port
+functionality. Serial ports are commonly used with embedded systems,
+such as the Arduino platform.
 
 Example Usage
 
@@ -28,6 +30,7 @@ Example Usage
       log.Println(buf)
     }
   }
+
 */
 package serialport
 

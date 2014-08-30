@@ -1,7 +1,9 @@
 # Go Serial Port
 
-Package serialport provides a binding to libserialport for serial port
-functionality.
+Package serialport provides a binding to libserialport for accessing
+serial ports on OS X, Linux, and Windows. Serial ports are commonly
+used with embedded systems, such as the Arduino platform, and are used
+to access hardware such as RS-232.
 
 
 ## Documentation
