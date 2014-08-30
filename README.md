@@ -1,9 +1,39 @@
 # Go Serial Port
 
+[![GoDoc](https://godoc.org/github.com/mikepb/go-serial?status.svg)](https://godoc.org/github.com/mikepb/go-serial)
+
 Package serial provides a binding to libserialport for serial port
 functionality. Serial ports are commonly used with embedded systems,
 such as the Arduino platform.
 
+## Usage
+
+```go
+package main
+
+import (
+  "github.com/mikepb/go-serial"
+  "log"
+)
+
+func main() {
+  p, err := serial.Open("/dev/tty",
+    serial.Options{Baudrate: 115200})
+  if err != nil {
+    log.Panic(err)
+  }
+
+  // optional, will automatically close when garbage collected
+  defer p.Close()
+
+  buf := make([]byte, 1)
+  if c, err := p.Read(buf); err != nil {
+    log.Panic(err)
+  } else {
+    log.Println(buf)
+  }
+}
+```
 
 ## Documentation
 
