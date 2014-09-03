@@ -43,23 +43,13 @@ package serial
 import "C"
 
 import (
-	"errors"
-	"os"
+	"bytes"
+	"net"
 	"reflect"
 	"runtime"
 	"time"
 	"unsafe"
 )
-
-// Serial port options.
-type Options struct {
-	Mode        int // read, write; default is read/write
-	Baudrate    int // number of bits per second (baudrate); default is 9600
-	DataBits    int // number of data bits (5, 6, 7, 8); default is 8
-	StopBits    int // number of stop bits (1, 2); default is 1
-	Parity      int // none, odd, even, mark, space; default is none
-	FlowControl int // none, xonxoff, rtscts, dtrdsr; default is none.
-}
 
 const (
 	// Port access modes
@@ -126,12 +116,21 @@ const (
 	TRANSPORT_BLUETOOTH = C.SP_TRANSPORT_BLUETOOTH // Bluetooh serial port adapter.
 )
 
+// Serial port options.
+type Options struct {
+	Mode        int // read, write; default is read/write
+	Baudrate    int // number of bits per second (baudrate); default is 9600
+	DataBits    int // number of data bits (5, 6, 7, 8); default is 8
+	StopBits    int // number of stop bits (1, 2); default is 1
+	Parity      int // none, odd, even, mark, space; default is none
+	FlowControl int // none, xonxoff, rtscts, dtrdsr; default is none.
+}
+
 // Serial port.
 type Port struct {
 	name          string
 	p             *C.struct_sp_port
 	c             *C.struct_sp_port_config
-	f             *os.File
 	fd            uintptr
 	opened        bool
 	readDeadline  time.Time
@@ -143,20 +142,18 @@ type Addr struct {
 	name string
 }
 
-// Implementation of net.Addr.Network()
-func (a *Addr) Network() string {
-	return a.name
+// Implementation of net.Error
+type Error struct {
+	msg       string
+	timeout   bool
+	temporary bool
 }
 
-// Implementation of net.Addr.String()
-func (a *Addr) String() string {
-	return a.name
-}
-
-var InvalidArgumentsError = errors.New("Invalid arguments were passed to the function")
-var SystemError = errors.New("A system error occured while executing the operation")
-var MemoryAllocationError = errors.New("A memory allocation failed while executing the operation")
-var UnsupportedOperationError = errors.New("The requested operation is not supported by this system or device")
+var InvalidArgumentsError = &Error{msg: "Invalid arguments were passed to the function"}
+var SystemError = &Error{msg: "A system error occured while executing the operation"}
+var MemoryAllocationError = &Error{msg: "A memory allocation failed while executing the operation"}
+var UnsupportedOperationError = &Error{msg: "The requested operation is not supported by this system or device"}
+var TimeoutError = &Error{msg: "Operation timed out", timeout: true}
 
 // Map error codes to errors.
 func errmsg(err C.enum_sp_return) error {
@@ -382,8 +379,6 @@ func (p *Port) open(opt *Options) (err error) {
 		p.Close()
 		return
 	}
-	// open file
-	p.f = os.NewFile(p.fd, p.Name())
 	p.opened = true
 
 	return nil
@@ -577,81 +572,96 @@ func (p *Port) ApplyRawConfig() (err error) {
 
 // Implementation of io.Reader interface.
 func (p *Port) Read(b []byte) (int, error) {
-	// use native read for no deadline
-	if p.readDeadline.IsZero() {
-		return p.f.Read(b)
-	}
-
-	// calculate milliseconds until deadline
-	delta := p.readDeadline.Sub(time.Now())
-	millis := delta.Nanoseconds() / int64(time.Millisecond)
-
 	var c int32
 
-	if millis <= 0 {
-		// call nonblocking read
-		c = C.sp_nonblocking_read(
-			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)))
-	} else {
-		// call blocking read
+	// no deadline
+	if p.readDeadline.IsZero() {
 		c = C.sp_blocking_read(
-			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)), C.uint(millis))
+			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)), 0)
+	} else {
+		// calculate milliseconds until deadline (rounded up)
+		delta := p.readDeadline.Sub(time.Now())
+		millis := int64(
+			(time.Duration(delta.Nanoseconds()) + time.Millisecond - time.Nanosecond) /
+				time.Millisecond)
+
+		if millis <= 0 {
+			// call nonblocking read
+			c = C.sp_nonblocking_read(
+				p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)))
+		} else {
+			// call blocking read
+			c = C.sp_blocking_read(
+				p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)), C.uint(millis))
+		}
 	}
 
+	n := int(c)
+
 	// check for error
-	if c < 0 {
+	if n < 0 {
 		return 0, errmsg(c)
+	} else if n != len(b) {
+		return n, TimeoutError
 	}
 
 	// update slice length
 	reflect.ValueOf(&b).Elem().SetLen(int(c))
 
-	return int(c), nil
+	return n, nil
 }
 
 // Implementation of io.Writer interface.
 func (p *Port) Write(b []byte) (int, error) {
-	if p.writeDeadline.IsZero() {
-		return p.f.Write(b)
-	}
-
-	// calculate milliseconds until deadline
-	delta := p.writeDeadline.Sub(time.Now())
-	millis := delta.Nanoseconds() / int64(time.Millisecond)
-
 	var c int32
 
-	if millis <= 0 {
-		// call nonblocking write
-		c = C.sp_nonblocking_write(
-			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)))
-	} else {
-		// call blocking write
+	// no deadline
+	if p.writeDeadline.IsZero() {
 		c = C.sp_blocking_write(
-			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)), C.uint(millis))
+			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)), 0)
+	} else {
+		// calculate milliseconds until deadline (rounded up)
+		delta := p.writeDeadline.Sub(time.Now())
+		millis := int64(
+			(time.Duration(delta.Nanoseconds()) + time.Millisecond - time.Nanosecond) /
+				time.Millisecond)
+
+		if millis <= 0 {
+			// call nonblocking write
+			c = C.sp_nonblocking_write(
+				p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)))
+		} else {
+			// call blocking write
+			c = C.sp_blocking_write(
+				p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)), C.uint(millis))
+		}
 	}
+
+	n := int(c)
 
 	// check for error
-	if c < 0 {
+	if n < 0 {
 		return 0, errmsg(c)
+	} else if n != len(b) {
+		return n, TimeoutError
 	}
 
-	return int(c), nil
+	return n, nil
 }
 
 // WriteString is like Write, but writes the contents of string s
 // rather than a slice of bytes.
 func (p *Port) WriteString(s string) (int, error) {
-	return p.f.WriteString(s)
+	return p.Write(bytes.NewBufferString(s).Bytes())
 }
 
 // Implementation of net.Conn.LocalAddr
-func (p *Port) LocalAddr() *Addr {
+func (p *Port) LocalAddr() net.Addr {
 	return &Addr{name: p.Name()}
 }
 
 // Implementation of net.Conn.RemoteAddr
-func (p *Port) RemoteAddr() *Addr {
+func (p *Port) RemoteAddr() net.Addr {
 	return &Addr{name: p.Name()}
 }
 
@@ -715,4 +725,29 @@ func (p *Port) FlushOutput() error {
 // Wait for buffered data to be transmitted.
 func (p *Port) Drain() error {
 	return errmsg(C.sp_drain(p.p))
+}
+
+// Implementation of net.Addr.Network()
+func (a *Addr) Network() string {
+	return a.name
+}
+
+// Implementation of net.Addr.String()
+func (a *Addr) String() string {
+	return a.name
+}
+
+// Implementation of error.Error()
+func (e *Error) Error() string {
+	return e.msg
+}
+
+// Implementation of net.Error.Timeout()
+func (e *Error) Timeout() bool {
+	return e.timeout
+}
+
+// Implementation of net.Error.Temporary()
+func (e *Error) Temporary() bool {
+	return e.temporary
 }
