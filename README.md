@@ -1,4 +1,4 @@
-# Go Serial Port
+# Go Serial
 
 [![GoDoc](https://godoc.org/github.com/mikepb/go-serial?status.svg)](https://godoc.org/github.com/mikepb/go-serial)
 
