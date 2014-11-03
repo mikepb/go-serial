@@ -44,12 +44,16 @@ import "C"
 
 import (
 	"bytes"
+	"log"
 	"net"
 	"reflect"
 	"runtime"
 	"time"
 	"unsafe"
 )
+
+// Debug flag
+const Debug = true
 
 const (
 	// Port access modes
@@ -573,6 +577,11 @@ func (p *Port) ApplyRawConfig() (err error) {
 // Implementation of io.Reader interface.
 func (p *Port) Read(b []byte) (int, error) {
 	var c int32
+	var start time.Time
+
+	if Debug {
+		start = time.Now()
+	}
 
 	// no deadline
 	if p.readDeadline.IsZero() {
@@ -585,6 +594,10 @@ func (p *Port) Read(b []byte) (int, error) {
 			(time.Duration(delta.Nanoseconds()) + time.Millisecond - time.Nanosecond) /
 				time.Millisecond)
 
+		if Debug {
+			log.Printf("read timeout: %d ns %d ms", delta, millis)
+		}
+
 		if millis <= 0 {
 			// call nonblocking read
 			c = C.sp_nonblocking_read(
@@ -594,6 +607,10 @@ func (p *Port) Read(b []byte) (int, error) {
 			c = C.sp_blocking_read(
 				p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)), C.uint(millis))
 		}
+	}
+
+	if Debug {
+		log.Printf("read time: %d ns", time.Since(start).Nanoseconds())
 	}
 
 	n := int(c)
@@ -614,6 +631,11 @@ func (p *Port) Read(b []byte) (int, error) {
 // Implementation of io.Writer interface.
 func (p *Port) Write(b []byte) (int, error) {
 	var c int32
+	var start time.Time
+
+	if Debug {
+		start = time.Now()
+	}
 
 	// no deadline
 	if p.writeDeadline.IsZero() {
@@ -626,6 +648,10 @@ func (p *Port) Write(b []byte) (int, error) {
 			(time.Duration(delta.Nanoseconds()) + time.Millisecond - time.Nanosecond) /
 				time.Millisecond)
 
+		if Debug {
+			log.Printf("write timeout: %d ns %d ms", delta, millis)
+		}
+
 		if millis <= 0 {
 			// call nonblocking write
 			c = C.sp_nonblocking_write(
@@ -635,6 +661,10 @@ func (p *Port) Write(b []byte) (int, error) {
 			c = C.sp_blocking_write(
 				p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)), C.uint(millis))
 		}
+	}
+
+	if Debug {
+		log.Printf("write time: %d ns", time.Since(start).Nanoseconds())
 	}
 
 	n := int(c)
