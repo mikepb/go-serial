@@ -15,7 +15,7 @@ Example Usage
 
   func main() {
     p, err := serial.Open("/dev/tty",
-      serial.Options{Baudrate: 115200})
+      serial.Options{BitRate: 115200})
     if err != nil {
       log.Panic(err)
     }
@@ -55,89 +55,113 @@ import (
 // Debug flag
 const Debug = false
 
+// Port access modes
 const (
-	// Port access modes
 	MODE_READ       = C.SP_MODE_READ       // Open port for read access
 	MODE_WRITE      = C.SP_MODE_WRITE      // Open port for write access
 	MODE_READ_WRITE = C.SP_MODE_READ_WRITE // Open port for read and write access.
+)
 
-	// Port events.
+// Port events.
+const (
 	EVENT_RX_READY = C.SP_EVENT_RX_READY // Data received and ready to read.
 	EVENT_TX_READY = C.SP_EVENT_TX_READY // Ready to transmit new data.
 	EVENT_ERROR    = C.SP_EVENT_ERROR    // Error occured.
+)
 
-	// Parity settings.
-	PARITY_INVALID = C.SP_PARITY_INVALID // Special value to indicate setting should be left alone.
-	PARITY_NONE    = C.SP_PARITY_NONE    // No parity.
-	PARITY_ODD     = C.SP_PARITY_ODD     // Odd parity.
-	PARITY_EVEN    = C.SP_PARITY_EVEN    // Even parity.
-	PARITY_MARK    = C.SP_PARITY_MARK    // Mark parity.
-	PARITY_SPACE   = C.SP_PARITY_SPACE   // Space parity.
+// Parity settings.
+const (
+	PARITY_INVALID = iota // Special value to indicate setting should be left alone.
+	PARITY_NONE           // No parity.
+	PARITY_ODD            // Odd parity.
+	PARITY_EVEN           // Even parity.
+	PARITY_MARK           // Mark parity.
+	PARITY_SPACE          // Space parity.
+)
 
-	// RTS pin behaviour.
-	RTS_INVALID      = C.SP_RTS_INVALID      // Special value to indicate setting should be left alone.
-	RTS_OFF          = C.SP_RTS_OFF          // RTS off.
-	RTS_ON           = C.SP_RTS_ON           // RTS on.
-	RTS_FLOW_CONTROL = C.SP_RTS_FLOW_CONTROL // RTS used for flow control.
+// RTS pin behaviour.
+const (
+	RTS_INVALID      = iota // Special value to indicate setting should be left alone.
+	RTS_OFF                 // RTS off.
+	RTS_ON                  // RTS on.
+	RTS_FLOW_CONTROL        // RTS used for flow control.
+)
 
-	// CTS pin behaviour.
-	CTS_INVALID      = C.SP_CTS_INVALID      // Special value to indicate setting should be left alone.
-	CTS_IGNORE       = C.SP_CTS_IGNORE       // CTS ignored.
-	CTS_FLOW_CONTROL = C.SP_CTS_FLOW_CONTROL // CTS used for flow control.
+// CTS pin behaviour.
+const (
+	CTS_INVALID      = iota // Special value to indicate setting should be left alone.
+	CTS_IGNORE              // CTS ignored.
+	CTS_FLOW_CONTROL        // CTS used for flow control.
+)
 
-	// DTR pin behaviour.
-	DTR_INVALID      = C.SP_DTR_INVALID      // Special value to indicate setting should be left alone.
-	DTR_OFF          = C.SP_DTR_OFF          // DTR off.
-	DTR_ON           = C.SP_DTR_ON           // DTR on.
-	DTR_FLOW_CONTROL = C.SP_DTR_FLOW_CONTROL // DTR used for flow control.
+// DTR pin behaviour.
+const (
+	DTR_INVALID      = iota // Special value to indicate setting should be left alone.
+	DTR_OFF                 // DTR off.
+	DTR_ON                  // DTR on.
+	DTR_FLOW_CONTROL        // DTR used for flow control.
+)
 
-	// DSR pin behaviour.
-	DSR_INVALID      = C.SP_DSR_INVALID      // Special value to indicate setting should be left alone.
-	DSR_IGNORE       = C.SP_DSR_IGNORE       // DSR ignored.
-	DSR_FLOW_CONTROL = C.SP_DSR_FLOW_CONTROL // DSR used for flow control.
+// DSR pin behaviour.
+const (
+	DSR_INVALID      = iota // Special value to indicate setting should be left alone.
+	DSR_IGNORE              // DSR ignored.
+	DSR_FLOW_CONTROL        // DSR used for flow control.
+)
 
-	// XON/XOFF flow control behaviour.
-	XONXOFF_INVALID  = C.SP_XONXOFF_INVALID  // Special value to indicate setting should be left alone.
-	XONXOFF_DISABLED = C.SP_XONXOFF_DISABLED // XON/XOFF disabled.
-	XONXOFF_IN       = C.SP_XONXOFF_IN       // XON/XOFF enabled for input only.
-	XONXOFF_OUT      = C.SP_XONXOFF_OUT      // XON/XOFF enabled for output only.
-	XONXOFF_INOUT    = C.SP_XONXOFF_INOUT    // XON/XOFF enabled for input and output.
+// XON/XOFF flow control behaviour.
+const (
+	XONXOFF_INVALID  = iota // Special value to indicate setting should be left alone.
+	XONXOFF_DISABLED        // XON/XOFF disabled.
+	XONXOFF_IN              // XON/XOFF enabled for input only.
+	XONXOFF_OUT             // XON/XOFF enabled for output only.
+	XONXOFF_INOUT           // XON/XOFF enabled for input and output.
+)
 
-	// Standard flow control combinations.
-	FLOWCONTROL_NONE    = C.SP_FLOWCONTROL_NONE    // No flow control.
-	FLOWCONTROL_XONXOFF = C.SP_FLOWCONTROL_XONXOFF // Software flow control using XON/XOFF characters.
-	FLOWCONTROL_RTSCTS  = C.SP_FLOWCONTROL_RTSCTS  // Hardware flow control using RTS/CTS signals.
-	FLOWCONTROL_DTRDSR  = C.SP_FLOWCONTROL_DTRDSR  // Hardware flow control using DTR/DSR signals.
+// Standard flow control combinations.
+const (
+	_                   = iota
+	FLOWCONTROL_NONE    // No flow control.
+	FLOWCONTROL_XONXOFF // Software flow control using XON/XOFF characters.
+	FLOWCONTROL_RTSCTS  // Hardware flow control using RTS/CTS signals.
+	FLOWCONTROL_DTRDSR  // Hardware flow control using DTR/DSR signals.
+)
 
-	// Input signals
+// Input signals
+const (
 	SIG_CTS = C.SP_SIG_CTS // Clear to send
 	SIG_DSR = C.SP_SIG_DSR // Data set ready
 	SIG_DCD = C.SP_SIG_DCD // Data carrier detect
 	SIG_RI  = C.SP_SIG_RI  // Ring indicator
+)
 
-	// Transport types.
+// Transport types.
+const (
 	TRANSPORT_NATIVE    = C.SP_TRANSPORT_NATIVE    // Native platform serial port.
 	TRANSPORT_USB       = C.SP_TRANSPORT_USB       // USB serial port adapter.
 	TRANSPORT_BLUETOOTH = C.SP_TRANSPORT_BLUETOOTH // Bluetooh serial port adapter.
 )
 
+// Serial port info.
+type Info struct {
+	p      *C.struct_sp_port
+	opened bool
+}
+
 // Serial port options.
 type Options struct {
-	Mode        int // read, write; default is read/write
-	Baudrate    int // number of bits per second (baudrate); default is 9600
-	DataBits    int // number of data bits (5, 6, 7, 8); default is 8
-	StopBits    int // number of stop bits (1, 2); default is 1
-	Parity      int // none, odd, even, mark, space; default is none
-	FlowControl int // none, xonxoff, rtscts, dtrdsr; default is none.
+	Mode        int // read, write; default is read
+	BitRate     int // number of bits per second (baudrate)
+	DataBits    int // number of data bits (5, 6, 7, 8)
+	StopBits    int // number of stop bits (1, 2)
+	Parity      int // none, odd, even, mark, space
+	FlowControl int // none, xonxoff, rtscts, dtrdsr
 }
 
 // Serial port.
 type Port struct {
-	name          string
-	p             *C.struct_sp_port
+	Info
 	c             *C.struct_sp_port_config
-	fd            uintptr
-	opened        bool
 	readDeadline  time.Time
 	writeDeadline time.Time
 }
@@ -154,57 +178,107 @@ type Error struct {
 	temporary bool
 }
 
-var InvalidArgumentsError = &Error{msg: "Invalid arguments were passed to the function"}
-var SystemError = &Error{msg: "A system error occured while executing the operation"}
-var MemoryAllocationError = &Error{msg: "A memory allocation failed while executing the operation"}
-var UnsupportedOperationError = &Error{msg: "The requested operation is not supported by this system or device"}
-var TimeoutError = &Error{msg: "Operation timed out", timeout: true}
+var RawOptions = Options{
+	DataBits:    8,
+	Parity:      PARITY_NONE,
+	StopBits:    1,
+	FlowControl: FLOWCONTROL_NONE,
+}
+
+var ErrInvalidArguments = &Error{msg: "Invalid arguments were passed to the function"}
+var ErrSystem = &Error{msg: "A system error occured while executing the operation"}
+var ErrMemoryAllocation = &Error{msg: "A memory allocation failed while executing the operation"}
+var ErrUnsupportedOperation = &Error{msg: "The requested operation is not supported by this system or device"}
+var ErrTimeout = &Error{msg: "Operation timed out", timeout: true}
 
 // Map error codes to errors.
 func errmsg(err C.enum_sp_return) error {
 	switch err {
 	case C.SP_ERR_ARG:
-		return InvalidArgumentsError
+		return ErrInvalidArguments
 	case C.SP_ERR_FAIL:
-		return SystemError
+		return ErrSystem
 	case C.SP_ERR_MEM:
-		return MemoryAllocationError
+		return ErrMemoryAllocation
 	case C.SP_ERR_SUPP:
-		return UnsupportedOperationError
+		return ErrUnsupportedOperation
 	}
 	return nil
 }
 
 // Wrap a sp_port struct in a go Port struct and set finalizer for
 // garbage collection.
-func newSerialPort(p *C.struct_sp_port) (*Port, error) {
-	sp := &Port{p: p}
-	if err := errmsg(C.sp_new_config(&sp.c)); err != nil {
-		return nil, err
+func newInfo(p *C.struct_sp_port) (*Info, error) {
+	info := &Info{p: p}
+	runtime.SetFinalizer(info, (*Info).free)
+	return info, nil
+}
+
+// Finalizer callback for garbage collection.
+func (i *Info) free() {
+	if i.p != nil {
+		if i.opened {
+			C.sp_close(i.p)
+		}
+		C.sp_free_port(i.p)
 	}
-	runtime.SetFinalizer(sp, (*Port).free)
-	return sp, nil
+	i.opened = false
+	i.p = nil
+}
+
+// Wrap a sp_port struct in a go Port struct and set finalizer for
+// garbage collection.
+func newPort(info *Info) (*Port, error) {
+	port := &Port{}
+
+	// copy info
+	if info != nil {
+		if err := errmsg(C.sp_copy_port(info.p, &port.p)); err != nil {
+			return nil, err
+		}
+	}
+
+	// set finalizers
+	runtime.SetFinalizer(port, (*Port).free)
+
+	return port, nil
 }
 
 // Finalizer callback for garbage collection.
 func (p *Port) free() {
-	if p.opened {
-		C.sp_close(p.p)
-	}
-	if p.p != nil {
-		C.sp_free_port(p.p)
-	}
+	p.Info.free()
 	if p.c != nil {
 		C.sp_free_config(p.c)
 	}
-	p.opened = false
-	p.p = nil
 	p.c = nil
 }
 
-// Get a port by name. The returned port is not opened automatically;
-// use p.Open() or p.OpenWithMode(...) to open the port for I/O.
-func PortByName(name string) (*Port, error) {
+// calculate milliseconds until deadline (rounded up)
+func deadline2millis(deadline time.Time) int64 {
+	delta := deadline.Sub(time.Now())
+
+	duration := time.Duration(delta.Nanoseconds())
+	duration += duration + time.Millisecond - time.Nanosecond
+	duration /= time.Millisecond
+
+	millis := int64(duration)
+
+	if Debug {
+		log.Printf("timeout: %d ns %d ms", delta, millis)
+	}
+
+	return millis
+}
+
+// Get a port by name.
+func PortByName(name string) (*Info, error) {
+	if p, err := portByName(name); err != nil {
+		return nil, err
+	} else {
+		return newInfo(p)
+	}
+}
+func portByName(name string) (*C.struct_sp_port, error) {
 	var p *C.struct_sp_port
 
 	cname := C.CString(name)
@@ -214,13 +288,11 @@ func PortByName(name string) (*Port, error) {
 		return nil, err
 	}
 
-	return newSerialPort(p)
+	return p, nil
 }
 
-// List the serial ports available on the system. The returned ports
-// are not opened automatically; use p.Open() or p.OpenWithMode(...)
-// to open the port(s) for I/O.
-func ListPorts() ([]*Port, error) {
+// List the serial ports available on the system.
+func ListPorts() ([]*Info, error) {
 	var p **C.struct_sp_port
 
 	if err := C.sp_list_ports(&p); err != C.SP_OK {
@@ -238,13 +310,13 @@ func ListPorts() ([]*Port, error) {
 	}
 
 	// populate
-	ports := make([]*Port, c)
+	ports := make([]*Info, c)
 	for j := 0; j < c; j++ {
 		var pc *C.struct_sp_port
 		if err := errmsg(C.sp_copy_port(pp[j], &pc)); err != nil {
 			return nil, err
 		}
-		if sp, err := newSerialPort(pc); err != nil {
+		if sp, err := newInfo(pc); err != nil {
 			return nil, err
 		} else {
 			ports[j] = sp
@@ -255,161 +327,243 @@ func ListPorts() ([]*Port, error) {
 }
 
 // Get the name of a port.
-func (p *Port) Name() string {
-	return C.GoString(C.sp_get_port_name(p.p))
+func (i *Info) Name() string {
+	return C.GoString(C.sp_get_port_name(i.p))
 }
 
 // Get a description for a port, to present to end user.
-func (p *Port) Description() string {
-	return C.GoString(C.sp_get_port_description(p.p))
+func (i *Info) Description() string {
+	return C.GoString(C.sp_get_port_description(i.p))
 }
 
 // Get the transport type used by a port.
-func (p *Port) Transport() int {
-	t := C.sp_get_port_transport(p.p)
+func (i *Info) Transport() int {
+	t := C.sp_get_port_transport(i.p)
 	return int(t)
 }
 
 // Get the USB bus number and address on bus of a USB serial adapter port.
-func (p *Port) USBBusAddress() (int, int, error) {
+func (i *Info) USBBusAddress() (int, int, error) {
 	var bus, address C.int
-	if err := errmsg(C.sp_get_port_usb_bus_address(p.p, &bus, &address)); err != nil {
+	if err := errmsg(C.sp_get_port_usb_bus_address(i.p, &bus, &address)); err != nil {
 		return 0, 0, err
 	}
 	return int(bus), int(address), nil
 }
 
 // Get the USB Vendor ID and Product ID of a USB serial adapter port.
-func (p *Port) USBVIDPID() (int, int, error) {
+func (i *Info) USBVIDPID() (int, int, error) {
 	var vid, pid C.int
-	if err := errmsg(C.sp_get_port_usb_vid_pid(p.p, &vid, &pid)); err != nil {
+	if err := errmsg(C.sp_get_port_usb_vid_pid(i.p, &vid, &pid)); err != nil {
 		return 0, 0, err
 	}
 	return int(vid), int(pid), nil
 }
 
 // Get the USB manufacturer string of a USB serial adapter port.
-func (p *Port) USBManufacturer() string {
-	cdesc := C.sp_get_port_usb_manufacturer(p.p)
+func (i *Info) USBManufacturer() string {
+	cdesc := C.sp_get_port_usb_manufacturer(i.p)
 	return C.GoString(cdesc)
 }
 
 // Get the USB product string of a USB serial adapter port.
-func (p *Port) USBProduct() string {
-	cdesc := C.sp_get_port_usb_product(p.p)
+func (i *Info) USBProduct() string {
+	cdesc := C.sp_get_port_usb_product(i.p)
 	return C.GoString(cdesc)
 }
 
 // Get the USB serial number string of a USB serial adapter port.
-func (p *Port) USBSerialNumber() string {
-	cdesc := C.sp_get_port_usb_serial(p.p)
+func (i *Info) USBSerialNumber() string {
+	cdesc := C.sp_get_port_usb_serial(i.p)
 	return C.GoString(cdesc)
 }
 
 // Get the MAC address of a Bluetooth serial adapter port.
-func (p *Port) BluetoothAddress() string {
-	cdesc := C.sp_get_port_bluetooth_address(p.p)
+func (i *Info) BluetoothAddress() string {
+	cdesc := C.sp_get_port_bluetooth_address(i.p)
 	return C.GoString(cdesc)
 }
 
-// Open a port by name with Options.
-func Open(name string, opt Options) (*Port, error) {
-	p, err := PortByName(name)
+// Open the port for reading and default options.
+func (i *Info) Open() (*Port, error) {
+	return i.OpenPort(&Options{Mode: MODE_READ})
+}
+
+// Open the port with the specified options.
+func (i *Info) OpenPort(options *Options) (*Port, error) {
+	// create port
+	port, err := newPort(i)
 	if err != nil {
 		return nil, err
 	}
-	err = p.open(&opt)
+
+	// open port
+	mode := MODE_READ
+	if options.Mode != 0 {
+		mode = options.Mode
+	}
+	if err = port.open(mode); err != nil {
+		return nil, err
+	}
+
+	// apply options
+	if err = port.Apply(options); err != nil {
+		port.Close()
+		return nil, err
+	}
+
+	return port, nil
+}
+
+func (i *Info) createPortAndInvalidateInfo() (*Port, error) {
+	port, err := newPort(nil)
 	if err != nil {
 		return nil, err
 	}
-	return p, nil
+
+	port.p = i.p
+	port.opened = i.opened
+
+	i.p = nil
+	i.opened = false
+
+	return port, nil
 }
 
-// Open the serial port with the given options.
-func (p *Port) Open(opt Options) error {
-	return p.open(&opt)
+// Open a port at the given name using the options object.
+func (o *Options) Open(name string) (port *Port, err error) {
+	if info, err := PortByName(name); err != nil {
+		return nil, err
+	} else {
+		return info.OpenPort(o)
+	}
 }
 
-func (p *Port) open(opt *Options) (err error) {
-	// set default mode to read/write
-	mode := MODE_READ | MODE_WRITE
-	if opt.Mode != 0 {
-		mode = opt.Mode
-	}
-	// open port with mode
-	if err = errmsg(C.sp_open(p.p, C.enum_sp_mode(mode))); err != nil {
-		return
-	}
+// Open a port at the given info using the options object.
+func (o *Options) OpenAt(info *Info) (port *Port, err error) {
+	return info.OpenPort(o)
+}
 
-	// get port config
-	if err = errmsg(C.sp_get_config(p.p, p.c)); err != nil {
-		p.Close()
-		return
-	}
-
-	// set baudrate
-	if opt.Baudrate == 0 {
-		opt.Baudrate = 9600
+// Open a port for reading.
+func Open(name string) (port *Port, err error) {
+	// get the port by name
+	if info, err := PortByName(name); err != nil {
+		return nil, err
+	} else if p, err := info.createPortAndInvalidateInfo(); p != nil {
+		return nil, err
 	} else {
-		p.SetBaudrate(opt.Baudrate)
+		port = p
 	}
 
-	// set data bits
-	if opt.DataBits == 0 {
-		p.SetDataBits(8)
-	} else {
-		p.SetDataBits(opt.DataBits)
+	// open port with read mode
+	if err = port.open(MODE_READ); err != nil {
+		return nil, err
 	}
 
-	// set stop bits
-	if opt.StopBits == 0 {
-		p.SetStopBits(1)
-	} else {
-		p.SetStopBits(opt.StopBits)
+	return
+}
+
+func (p *Port) open(mode int) error {
+	if p.opened {
+		panic("already opened")
 	}
-
-	// set parity
-	p.SetParity(opt.Parity)
-
-	// set flow control
-	p.SetRTS(RTS_OFF)
-	p.SetDTR(DTR_OFF)
-	p.SetFlowControl(opt.FlowControl)
-
-	// apply config
-	p.ApplyConfig()
-
-	// get port handle
-	if err = errmsg(C.sp_get_port_handle(p.p, unsafe.Pointer(&p.fd))); err != nil {
-		p.Close()
-		return
-	}
-	p.opened = true
-
-	return nil
+	err := errmsg(C.sp_open(p.p, C.enum_sp_mode(mode)))
+	p.opened = err == nil
+	return p.getConf()
 }
 
 // Close the serial port.
 func (p *Port) Close() error {
+	if !p.opened {
+		panic("already closed")
+	}
 	err := errmsg(C.sp_close(p.p))
 	p.opened = false
 	return err
 }
 
+func (p *Port) getConf() error {
+	if p.c == nil {
+		if err := errmsg(C.sp_new_config(&p.c)); err != nil {
+			return err
+		}
+	}
+	return errmsg(C.sp_get_config(p.p, p.c))
+}
+
+// Apply port options.
+func (p *Port) Apply(o *Options) (err error) {
+	// get port config
+	var conf *C.struct_sp_port_config
+	if err = errmsg(C.sp_new_config(&conf)); err != nil {
+		return
+	}
+	defer C.sp_free_config(conf)
+
+	// set bit rate
+	if o.BitRate != 0 {
+		err = errmsg(C.sp_set_config_baudrate(conf, C.int(o.BitRate)))
+		if err != nil {
+			return
+		}
+	}
+
+	// set data bits
+	if o.DataBits != 0 {
+		err = errmsg(C.sp_set_config_bits(conf, C.int(o.DataBits)))
+		if err != nil {
+			return
+		}
+	}
+
+	// set stop bits
+	if o.StopBits != 0 {
+		err = errmsg(C.sp_set_config_stopbits(conf, C.int(o.StopBits)))
+		if err != nil {
+			return
+		}
+	}
+
+	// set parity
+	if o.Parity != 0 {
+		cparity := parity2c(o.Parity)
+		err = errmsg(C.sp_set_config_parity(conf, cparity))
+		if err != nil {
+			return
+		}
+	}
+
+	// set flow control
+	if o.FlowControl != 0 {
+		p.SetFlowControl(o.FlowControl)
+	}
+
+	// apply config
+	if err = errmsg(C.sp_set_config(p.p, conf)); err != nil {
+		return
+	}
+
+	// update local config
+	return p.getConf()
+}
+
 // Get the baud rate from a port configuration. The port must be
 // opened for this operation.
-func (p *Port) Baudrate() (int, error) {
-	var baudrate C.int
-	if err := errmsg(C.sp_get_config_baudrate(p.c, &baudrate)); err != nil {
+func (p *Port) BitRate() (int, error) {
+	var bitrate C.int
+	if err := errmsg(C.sp_get_config_baudrate(p.c, &bitrate)); err != nil {
 		return 0, err
 	}
-	return int(baudrate), nil
+	return int(bitrate), nil
 }
 
 // Set the baud rate for the serial port. The port must be opened for
 // this operation. Call p.ApplyConfig() to apply the change.
-func (p *Port) SetBaudrate(baudrate int) error {
-	return errmsg(C.sp_set_baudrate(p.p, C.int(baudrate)))
+func (p *Port) SetBitRate(bitrate int) error {
+	if err := errmsg(C.sp_set_baudrate(p.p, C.int(bitrate))); err != nil {
+		return err
+	}
+	return p.getConf()
 }
 
 // Get the data bits from a port configuration. The port must be
@@ -426,23 +580,10 @@ func (p *Port) DataBits() (int, error) {
 // opened for this operation. Call p.ApplyConfig() to apply the
 // change.
 func (p *Port) SetDataBits(bits int) error {
-	return errmsg(C.sp_set_config_bits(p.c, C.int(bits)))
-}
-
-// Get the parity setting from a port configuration. The port must be
-// opened for this operation.
-func (p *Port) Parity() (int, error) {
-	var parity C.enum_sp_return
-	if err := errmsg(C.sp_get_config_parity(p.c, &parity)); err != nil {
-		return 0, err
+	if err := errmsg(C.sp_set_config_bits(p.c, C.int(bits))); err != nil {
+		return err
 	}
-	return int(parity), nil
-}
-
-// Set the parity setting for the serial port. The port must be opened
-// for this operation. Call p.ApplyConfig() to apply the change.
-func (p *Port) SetParity(parity int) error {
-	return errmsg(C.sp_set_config_parity(p.c, C.enum_sp_return(parity)))
+	return p.getConf()
 }
 
 // Get the stop bits from a port configuration. The port must be
@@ -458,121 +599,317 @@ func (p *Port) StopBits() (int, error) {
 // Set the stop bits for the serial port. The port must be opened for
 // this operation. Call p.ApplyConfig() to apply the change.
 func (p *Port) SetStopBits(stopbits int) error {
-	return errmsg(C.sp_set_config_stopbits(p.c, C.int(stopbits)))
+	if err := errmsg(C.sp_set_config_stopbits(p.c, C.int(stopbits))); err != nil {
+		return err
+	}
+	return p.getConf()
+}
+
+// Get the parity setting from a port configuration. The port must be
+// opened for this operation.
+func (p *Port) Parity() (int, error) {
+	cparity := C.enum_sp_parity(C.SP_PARITY_INVALID)
+	if err := errmsg(C.sp_get_config_parity(p.c, &cparity)); err != nil {
+		return 0, err
+	}
+	return c2parity(cparity), nil
+}
+
+// Set the parity setting for the serial port. The port must be opened
+// for this operation. Call p.ApplyConfig() to apply the change.
+func (p *Port) SetParity(parity int) error {
+	cparity := parity2c(parity)
+	if err := errmsg(C.sp_set_config_parity(p.c, cparity)); err != nil {
+		return err
+	}
+	return p.getConf()
+}
+
+func c2parity(cparity C.enum_sp_parity) int {
+	switch cparity {
+	case C.SP_PARITY_NONE:
+		return PARITY_NONE
+	case C.SP_PARITY_ODD:
+		return PARITY_ODD
+	case C.SP_PARITY_EVEN:
+		return PARITY_EVEN
+	case C.SP_PARITY_MARK:
+		return PARITY_MARK
+	case C.SP_PARITY_SPACE:
+		return PARITY_SPACE
+	default:
+		return PARITY_INVALID
+	}
+}
+
+func parity2c(parity int) C.enum_sp_parity {
+	switch parity {
+	case PARITY_NONE:
+		return C.SP_PARITY_NONE
+	case PARITY_ODD:
+		return C.SP_PARITY_ODD
+	case PARITY_EVEN:
+		return C.SP_PARITY_EVEN
+	case PARITY_MARK:
+		return C.SP_PARITY_MARK
+	case PARITY_SPACE:
+		return C.SP_PARITY_SPACE
+	default:
+		return C.SP_PARITY_INVALID
+	}
 }
 
 // Get the RTS pin behaviour from a port configuration. The port must
 // be opened for this operation.
 func (p *Port) RTS() (int, error) {
-	var rts C.enum_sp_rts
+	rts := C.enum_sp_rts(C.SP_RTS_INVALID)
 	if err := errmsg(C.sp_get_config_rts(p.c, &rts)); err != nil {
 		return 0, err
 	}
-	return int(rts), nil
+	return c2rts(rts), nil
 }
 
 // Set the RTS pin behaviour in a port configuration. The port must be
 // opened for this operation. Call p.ApplyConfig() to apply the
 // change.
 func (p *Port) SetRTS(rts int) error {
-	return errmsg(C.sp_set_config_rts(p.c, C.enum_sp_rts(rts)))
+	crts := rts2c(rts)
+	if err := errmsg(C.sp_set_config_rts(p.c, crts)); err != nil {
+		return err
+	}
+	return p.getConf()
+}
+
+func c2rts(rts C.enum_sp_rts) int {
+	switch rts {
+	case C.SP_RTS_OFF:
+		return RTS_OFF
+	case C.SP_RTS_ON:
+		return RTS_ON
+	case C.SP_RTS_FLOW_CONTROL:
+		return RTS_FLOW_CONTROL
+	default:
+		return RTS_INVALID
+	}
+}
+
+func rts2c(rts int) C.enum_sp_rts {
+	switch rts {
+	case RTS_OFF:
+		return C.SP_RTS_OFF
+	case RTS_ON:
+		return C.SP_RTS_ON
+	case RTS_FLOW_CONTROL:
+		return C.SP_RTS_FLOW_CONTROL
+	default:
+		return C.SP_RTS_INVALID
+	}
 }
 
 // Get the CTS pin behaviour from a port configuration. The port must
 // be opened for this operation.
 func (p *Port) CTS() (int, error) {
-	var cts C.enum_sp_cts
+	cts := C.enum_sp_cts(C.SP_CTS_INVALID)
 	if err := errmsg(C.sp_get_config_cts(p.c, &cts)); err != nil {
 		return 0, err
 	}
-	return int(cts), nil
+	return c2cts(cts), nil
 }
 
 // Set the CTS pin behaviour in a port configuration. The port must be
 // opened for this operation. Call p.ApplyConfig() to apply the
 // change.
 func (p *Port) SetCTS(cts int) error {
-	return errmsg(C.sp_set_config_cts(p.c, C.enum_sp_cts(cts)))
+	ccts := cts2c(cts)
+	if err := errmsg(C.sp_set_config_cts(p.c, ccts)); err != nil {
+		return err
+	}
+	return p.getConf()
+}
+
+func c2cts(cts C.enum_sp_cts) int {
+	switch cts {
+	case C.SP_CTS_IGNORE:
+		return CTS_IGNORE
+	case C.SP_CTS_FLOW_CONTROL:
+		return CTS_FLOW_CONTROL
+	default:
+		return CTS_INVALID
+	}
+}
+
+func cts2c(cts int) C.enum_sp_cts {
+	switch cts {
+	case CTS_IGNORE:
+		return C.SP_CTS_IGNORE
+	case CTS_FLOW_CONTROL:
+		return C.SP_CTS_FLOW_CONTROL
+	default:
+		return C.SP_CTS_INVALID
+	}
 }
 
 // Get the DTR pin behaviour from a port configuration. The port must
 // be opened for this operation.
 func (p *Port) DTR() (int, error) {
-	var dtr C.enum_sp_rts
+	dtr := C.enum_sp_dtr(C.SP_DTR_INVALID)
 	if err := errmsg(C.sp_get_config_dtr(p.c, &dtr)); err != nil {
 		return 0, err
 	}
-	return int(dtr), nil
+	return c2dtr(dtr), nil
 }
 
 // Set the DTR pin behaviour in a port configuration. The port must be
 // opened for this operation. Call p.ApplyConfig() to apply the
 // change.
 func (p *Port) SetDTR(dtr int) error {
-	return errmsg(C.sp_set_config_dtr(p.c, C.enum_sp_dtr(dtr)))
+	cdtr := dtr2c(dtr)
+	if err := errmsg(C.sp_set_config_dtr(p.c, cdtr)); err != nil {
+		return err
+	}
+	return p.getConf()
+}
+
+func c2dtr(dtr C.enum_sp_dtr) int {
+	switch dtr {
+	case C.SP_DTR_OFF:
+		return DTR_OFF
+	case C.SP_DTR_ON:
+		return DTR_ON
+	case C.SP_DTR_FLOW_CONTROL:
+		return DTR_FLOW_CONTROL
+	default:
+		return DTR_INVALID
+	}
+}
+
+func dtr2c(dtr int) C.enum_sp_dtr {
+	switch dtr {
+	case DTR_OFF:
+		return C.SP_DTR_OFF
+	case DTR_ON:
+		return C.SP_DTR_ON
+	case DTR_FLOW_CONTROL:
+		return C.SP_DTR_FLOW_CONTROL
+	default:
+		return C.SP_DTR_INVALID
+	}
 }
 
 // Get the DSR pin behaviour from a port configuration. The port must
 // be opened for this operation.
 func (p *Port) DSR() (int, error) {
-	var dsr C.enum_sp_dsr
+	dsr := C.enum_sp_dsr(C.SP_DSR_INVALID)
 	if err := errmsg(C.sp_get_config_dsr(p.c, &dsr)); err != nil {
 		return 0, err
 	}
-	return int(dsr), nil
+	return c2dsr(dsr), nil
 }
 
 // Set the DSR pin behaviour in a port configuration. The port must be
 // opened for this operation. Call p.ApplyConfig() to apply the
 // change.
 func (p *Port) SetDSR(dsr int) error {
-	return errmsg(C.sp_set_config_dsr(p.c, C.enum_sp_dsr(dsr)))
+	cdsr := dsr2c(dsr)
+	if err := errmsg(C.sp_set_config_dsr(p.c, cdsr)); err != nil {
+		return err
+	}
+	return p.getConf()
+}
+
+func c2dsr(dsr C.enum_sp_dsr) int {
+	switch dsr {
+	case C.SP_DSR_IGNORE:
+		return DSR_IGNORE
+	case C.SP_DSR_FLOW_CONTROL:
+		return DSR_FLOW_CONTROL
+	default:
+		return DSR_INVALID
+	}
+}
+
+func dsr2c(dsr int) C.enum_sp_dsr {
+	switch dsr {
+	case DSR_IGNORE:
+		return C.SP_DSR_IGNORE
+	case DSR_FLOW_CONTROL:
+		return C.SP_DSR_FLOW_CONTROL
+	default:
+		return C.SP_DSR_INVALID
+	}
 }
 
 // Get the XON/XOFF configuration from a port configuration. The port
 // must be opened for this operation.
 func (p *Port) XonXoff() (int, error) {
-	var xon C.enum_sp_xonxoff
+	xon := C.enum_sp_xonxoff(C.SP_XONXOFF_INVALID)
 	if err := errmsg(C.sp_get_config_xon_xoff(p.c, &xon)); err != nil {
 		return 0, err
 	}
-	return int(xon), nil
+	return c2xon(xon), nil
 }
 
 // Set the XON/XOFF configuration in a port configuration. The port
 // must be opened for this operation. Call p.ApplyConfig() to apply
 // the change.
 func (p *Port) SetXonXoff(xon int) error {
-	return errmsg(C.sp_set_config_xon_xoff(p.c, C.enum_sp_xonxoff(xon)))
+	cxon := xon2c(xon)
+	if err := errmsg(C.sp_set_config_xon_xoff(p.c, cxon)); err != nil {
+		return err
+	}
+	return p.getConf()
+}
+
+func c2xon(xon C.enum_sp_xonxoff) int {
+	switch xon {
+	case C.SP_XONXOFF_DISABLED:
+		return XONXOFF_DISABLED
+	case C.SP_XONXOFF_IN:
+		return XONXOFF_IN
+	case C.SP_XONXOFF_OUT:
+		return XONXOFF_OUT
+	default:
+		return XONXOFF_INVALID
+	}
+}
+
+func xon2c(xon int) C.enum_sp_xonxoff {
+	switch xon {
+	case XONXOFF_DISABLED:
+		return C.SP_XONXOFF_DISABLED
+	case XONXOFF_IN:
+		return C.SP_XONXOFF_IN
+	case XONXOFF_OUT:
+		return C.SP_XONXOFF_OUT
+	default:
+		return C.SP_XONXOFF_INVALID
+	}
 }
 
 // Set the flow control type in a port configuration. The port must be
 // opened for this operation. Call p.ApplyConfig() to apply the
 // change.
-func (p *Port) SetFlowControl(xon int) error {
-	return errmsg(C.sp_set_config_flowcontrol(p.c, C.enum_sp_flowcontrol(xon)))
-}
+func (p *Port) SetFlowControl(fc int) error {
+	var cfc C.enum_sp_flowcontrol
 
-// Apply the configuration for the serial port.
-func (p *Port) ApplyConfig() error {
-	return errmsg(C.sp_set_config(p.p, p.c))
-}
+	switch fc {
+	case FLOWCONTROL_NONE:
+		cfc = C.SP_FLOWCONTROL_NONE
+	case FLOWCONTROL_XONXOFF:
+		cfc = C.SP_FLOWCONTROL_XONXOFF
+	case FLOWCONTROL_RTSCTS:
+		cfc = C.SP_FLOWCONTROL_RTSCTS
+	case FLOWCONTROL_DTRDSR:
+		cfc = C.SP_FLOWCONTROL_DTRDSR
+	default:
+		return ErrInvalidArguments
+	}
 
-// Apply the raw mode configuration for the serial port.
-func (p *Port) ApplyRawConfig() (err error) {
-	if err = p.SetDataBits(8); err != nil {
-		return
+	if err := errmsg(C.sp_set_config_flowcontrol(p.c, cfc)); err != nil {
+		return err
 	}
-	if err = p.SetParity(PARITY_NONE); err != nil {
-		return
-	}
-	if err = p.SetStopBits(1); err != nil {
-		return
-	}
-	if err = p.SetFlowControl(FLOWCONTROL_NONE); err != nil {
-		return
-	}
-	return errmsg(C.sp_set_config(p.p, p.c))
+
+	return p.getConf()
 }
 
 // Implementation of io.Reader interface.
@@ -584,30 +921,24 @@ func (p *Port) Read(b []byte) (int, error) {
 		start = time.Now()
 	}
 
-	// no deadline
 	if p.readDeadline.IsZero() {
+
+		// no deadline
 		c = C.sp_blocking_read(
 			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)), 0)
+
+	} else if millis := deadline2millis(p.readDeadline); millis <= 0 {
+
+		// call nonblocking read
+		c = C.sp_nonblocking_read(
+			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)))
+
 	} else {
-		// calculate milliseconds until deadline (rounded up)
-		delta := p.readDeadline.Sub(time.Now())
-		millis := int64(
-			(time.Duration(delta.Nanoseconds()) + time.Millisecond - time.Nanosecond) /
-				time.Millisecond)
 
-		if Debug {
-			log.Printf("read timeout: %d ns %d ms", delta, millis)
-		}
+		// call blocking read
+		c = C.sp_blocking_read(
+			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)), C.uint(millis))
 
-		if millis <= 0 {
-			// call nonblocking read
-			c = C.sp_nonblocking_read(
-				p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)))
-		} else {
-			// call blocking read
-			c = C.sp_blocking_read(
-				p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)), C.uint(millis))
-		}
 	}
 
 	if Debug {
@@ -620,7 +951,7 @@ func (p *Port) Read(b []byte) (int, error) {
 	if n < 0 {
 		return 0, errmsg(c)
 	} else if n != len(b) {
-		return n, TimeoutError
+		return n, ErrTimeout
 	}
 
 	// update slice length
@@ -638,30 +969,24 @@ func (p *Port) Write(b []byte) (int, error) {
 		start = time.Now()
 	}
 
-	// no deadline
 	if p.writeDeadline.IsZero() {
+
+		// no deadline
 		c = C.sp_blocking_write(
 			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)), 0)
+
+	} else if millis := deadline2millis(p.writeDeadline); millis <= 0 {
+
+		// call nonblocking write
+		c = C.sp_nonblocking_write(
+			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)))
+
 	} else {
-		// calculate milliseconds until deadline (rounded up)
-		delta := p.writeDeadline.Sub(time.Now())
-		millis := int64(
-			(time.Duration(delta.Nanoseconds()) + time.Millisecond - time.Nanosecond) /
-				time.Millisecond)
 
-		if Debug {
-			log.Printf("write timeout: %d ns %d ms", delta, millis)
-		}
+		// call blocking write
+		c = C.sp_blocking_write(
+			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)), C.uint(millis))
 
-		if millis <= 0 {
-			// call nonblocking write
-			c = C.sp_nonblocking_write(
-				p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)))
-		} else {
-			// call blocking write
-			c = C.sp_blocking_write(
-				p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)), C.uint(millis))
-		}
 	}
 
 	if Debug {
@@ -674,7 +999,7 @@ func (p *Port) Write(b []byte) (int, error) {
 	if n < 0 {
 		return 0, errmsg(c)
 	} else if n != len(b) {
-		return n, TimeoutError
+		return n, ErrTimeout
 	}
 
 	return n, nil
@@ -733,34 +1058,29 @@ func (p *Port) OutputWaiting() (int, error) {
 	return int(c), nil
 }
 
-// Alias for Flush.
+// Wait for buffered data to be transmitted.
 func (p *Port) Sync() error {
-	return p.Flush()
+	return errmsg(C.sp_drain(p.p))
 }
 
-// Flush serial port buffers.
-func (p *Port) Flush() error {
+// Discard buffered data.
+func (p *Port) Reset() error {
 	return errmsg(C.sp_flush(p.p, C.SP_BUF_BOTH))
 }
 
-// Flush serial port input buffers.
-func (p *Port) FlushInput() error {
+// Discard buffered input data.
+func (p *Port) ResetInput() error {
 	return errmsg(C.sp_flush(p.p, C.SP_BUF_INPUT))
 }
 
-// Flush serial port output buffers.
-func (p *Port) FlushOutput() error {
+// Discard buffered output data.
+func (p *Port) ResetOutput() error {
 	return errmsg(C.sp_flush(p.p, C.SP_BUF_OUTPUT))
-}
-
-// Wait for buffered data to be transmitted.
-func (p *Port) Drain() error {
-	return errmsg(C.sp_drain(p.p))
 }
 
 // Implementation of net.Addr.Network()
 func (a *Addr) Network() string {
-	return a.name
+	return "serial"
 }
 
 // Implementation of net.Addr.String()

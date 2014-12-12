@@ -17,8 +17,9 @@ import (
 )
 
 func main() {
-  p, err := serial.Open("/dev/tty",
-    serial.Options{Baudrate: 115200})
+  options := serial.RawOptions
+  options.BitRate = 115200
+  p, err := options.Open("/dev/tty")
   if err != nil {
     log.Panic(err)
   }
