@@ -57,8 +57,9 @@ const Debug = false
 
 const (
 	// Port access modes
-	MODE_READ  = C.SP_MODE_READ  // Open port for read access
-	MODE_WRITE = C.SP_MODE_WRITE // Open port for write access
+	MODE_READ       = C.SP_MODE_READ       // Open port for read access
+	MODE_WRITE      = C.SP_MODE_WRITE      // Open port for write access
+	MODE_READ_WRITE = C.SP_MODE_READ_WRITE // Open port for read and write access.
 
 	// Port events.
 	EVENT_RX_READY = C.SP_EVENT_RX_READY // Data received and ready to read.

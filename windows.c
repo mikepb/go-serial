@@ -255,7 +255,7 @@ static void enumerate_hub(struct sp_port *port, char *hub_name,
 	/* get the number of ports of the hub */
 	if (DeviceIoControl(hub_device, IOCTL_USB_GET_NODE_INFORMATION,
 	                    &hub_info, size, &hub_info, size, &size, NULL))
-		/* enumarate the ports of the hub */
+		/* enumerate the ports of the hub */
 		enumerate_hub_ports(port, hub_device,
 		   hub_info.u.HubInformation.HubDescriptor.bNumberOfPorts, parent_path);
 
@@ -355,14 +355,17 @@ SP_PRIV enum sp_return get_port_details(struct sp_port *port)
 		CONFIGRET cr;
 
 		/* check if this is the device we are looking for */
-		if (!(device_key = SetupDiOpenDevRegKey(device_info, &device_info_data,
-		                                        DICS_FLAG_GLOBAL, 0,
-		                                        DIREG_DEV, KEY_QUERY_VALUE)))
+		device_key = SetupDiOpenDevRegKey(device_info, &device_info_data,
+		                                  DICS_FLAG_GLOBAL, 0,
+		                                  DIREG_DEV, KEY_QUERY_VALUE);
+		if (device_key == INVALID_HANDLE_VALUE)
 			continue;
 		size = sizeof(value);
 		if (RegQueryValueExA(device_key, "PortName", NULL, &type, (LPBYTE)value,
-		                     &size) != ERROR_SUCCESS || type != REG_SZ)
+		                     &size) != ERROR_SUCCESS || type != REG_SZ) {
+			RegCloseKey(device_key);
 			continue;
+		}
 		RegCloseKey(device_key);
 		value[sizeof(value)-1] = 0;
 		if (strcmp(value, port->name))
@@ -448,11 +451,13 @@ SP_PRIV enum sp_return get_port_details(struct sp_port *port)
 			free(escaped_port_name);
 			CloseHandle(handle);
 
-			/* retrive USB device details from the device descriptor */
+			/* retrieve USB device details from the device descriptor */
 			get_usb_details(port, device_info_data.DevInst);
 		}
 		break;
 	}
+
+	SetupDiDestroyDeviceInfoList(device_info);
 
 	RETURN_OK();
 }
@@ -496,28 +501,30 @@ SP_PRIV enum sp_return list_ports(struct sp_port ***list)
 		RegEnumValue(key, index, value, &value_len,
 			NULL, &type, (LPBYTE)data, &data_size) == ERROR_SUCCESS)
 	{
-		data_len = data_size / sizeof(TCHAR);
-		data[data_len] = '\0';
-#ifdef UNICODE
-		name_len = WideCharToMultiByte(CP_ACP, 0, data, -1, NULL, 0, NULL, NULL);
-#else
-		name_len = data_len + 1;
-#endif
-		if (!(name = malloc(name_len))) {
-			SET_ERROR(ret, SP_ERR_MEM, "registry port name malloc failed");
-			goto out;
-		}
-#ifdef UNICODE
-		WideCharToMultiByte(CP_ACP, 0, data, -1, name, name_len, NULL, NULL);
-#else
-		strcpy(name, data);
-#endif
 		if (type == REG_SZ) {
+			data_len = data_size / sizeof(TCHAR);
+			data[data_len] = '\0';
+#ifdef UNICODE
+			name_len = WideCharToMultiByte(CP_ACP, 0, data, -1, NULL, 0, NULL, NULL);
+#else
+			name_len = data_len + 1;
+#endif
+			if (!(name = malloc(name_len))) {
+				SET_ERROR(ret, SP_ERR_MEM, "registry port name malloc failed");
+				goto out;
+			}
+#ifdef UNICODE
+			WideCharToMultiByte(CP_ACP, 0, data, -1, name, name_len, NULL, NULL);
+#else
+			strcpy(name, data);
+#endif
 			DEBUG_FMT("Found port %s", name);
 			if (!(*list = list_append(*list, name))) {
 				SET_ERROR(ret, SP_ERR_MEM, "list append failed");
+				free(name);
 				goto out;
 			}
+			free(name);
 		}
 		index++;
 	}

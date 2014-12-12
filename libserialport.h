@@ -100,7 +100,7 @@ enum sp_return {
 	/** A memory allocation failed while executing the operation. */
 	SP_ERR_MEM = -3,
 	/** The requested operation is not supported by this system or device. */
-	SP_ERR_SUPP = -4,
+	SP_ERR_SUPP = -4
 };
 
 /** Port access modes. */
@@ -109,6 +109,8 @@ enum sp_mode {
 	SP_MODE_READ = 1,
 	/** Open port for write access. */
 	SP_MODE_WRITE = 2,
+	/** Open port for read and write access. */
+	SP_MODE_READ_WRITE = 3
 };
 
 /** Port events. */
@@ -118,7 +120,7 @@ enum sp_event {
 	/* Ready to transmit new data. */
 	SP_EVENT_TX_READY = 2,
 	/* Error occured. */
-	SP_EVENT_ERROR = 4,
+	SP_EVENT_ERROR = 4
 };
 
 /** Buffer selection. */
@@ -128,7 +130,7 @@ enum sp_buffer {
 	/** Output buffer. */
 	SP_BUF_OUTPUT = 2,
 	/** Both buffers. */
-	SP_BUF_BOTH = 3,
+	SP_BUF_BOTH = 3
 };
 
 /** Parity settings. */
@@ -144,7 +146,7 @@ enum sp_parity {
 	/** Mark parity. */
 	SP_PARITY_MARK = 3,
 	/** Space parity. */
-	SP_PARITY_SPACE = 4,
+	SP_PARITY_SPACE = 4
 };
 
 /** RTS pin behaviour. */
@@ -156,7 +158,7 @@ enum sp_rts {
 	/** RTS on. */
 	SP_RTS_ON = 1,
 	/** RTS used for flow control. */
-	SP_RTS_FLOW_CONTROL = 2,
+	SP_RTS_FLOW_CONTROL = 2
 };
 
 /** CTS pin behaviour. */
@@ -166,7 +168,7 @@ enum sp_cts {
 	/** CTS ignored. */
 	SP_CTS_IGNORE = 0,
 	/** CTS used for flow control. */
-	SP_CTS_FLOW_CONTROL = 1,
+	SP_CTS_FLOW_CONTROL = 1
 };
 
 /** DTR pin behaviour. */
@@ -178,7 +180,7 @@ enum sp_dtr {
 	/** DTR on. */
 	SP_DTR_ON = 1,
 	/** DTR used for flow control. */
-	SP_DTR_FLOW_CONTROL = 2,
+	SP_DTR_FLOW_CONTROL = 2
 };
 
 /** DSR pin behaviour. */
@@ -188,7 +190,7 @@ enum sp_dsr {
 	/** DSR ignored. */
 	SP_DSR_IGNORE = 0,
 	/** DSR used for flow control. */
-	SP_DSR_FLOW_CONTROL = 1,
+	SP_DSR_FLOW_CONTROL = 1
 };
 
 /** XON/XOFF flow control behaviour. */
@@ -202,7 +204,7 @@ enum sp_xonxoff {
 	/** XON/XOFF enabled for output only. */
 	SP_XONXOFF_OUT = 2,
 	/** XON/XOFF enabled for input and output. */
-	SP_XONXOFF_INOUT = 3,
+	SP_XONXOFF_INOUT = 3
 };
 
 /** Standard flow control combinations. */
@@ -214,7 +216,7 @@ enum sp_flowcontrol {
 	/** Hardware flow control using RTS/CTS signals. */
 	SP_FLOWCONTROL_RTSCTS = 2,
 	/** Hardware flow control using DTR/DSR signals. */
-	SP_FLOWCONTROL_DTRDSR = 3,
+	SP_FLOWCONTROL_DTRDSR = 3
 };
 
 /** Input signals. */
@@ -226,7 +228,7 @@ enum sp_signal {
 	/** Data carrier detect. */
 	SP_SIG_DCD = 4,
 	/** Ring indicator. */
-	SP_SIG_RI = 8,
+	SP_SIG_RI = 8
 };
 
 /** Transport types. */
@@ -235,8 +237,8 @@ enum sp_transport {
 	SP_TRANSPORT_NATIVE,
 	/** USB serial port adapter. */
 	SP_TRANSPORT_USB,
-	/** Bluetooh serial port adapter. */
-	SP_TRANSPORT_BLUETOOTH,
+	/** Bluetooth serial port adapter. */
+	SP_TRANSPORT_BLUETOOTH
 };
 
 /**
@@ -1196,13 +1198,13 @@ void sp_free_event_set(struct sp_event_set *event_set);
  * the sp_signal enum.
  *
  * @param port Pointer to port structure.
- * @param signals Pointer to variable to receive result.
+ * @param signal_mask Pointer to variable to receive result.
  *
  * @return SP_OK upon success, a negative error code otherwise.
  *
  * @since 0.1.0
  */
-enum sp_return sp_get_signals(struct sp_port *port, enum sp_signal *signals);
+enum sp_return sp_get_signals(struct sp_port *port, enum sp_signal *signal_mask);
 
 /**
  * Put the port transmit line into the break state.
@@ -1321,13 +1323,13 @@ void sp_default_debug_handler(const char *format, ...);
 #define SP_PACKAGE_VERSION_MAJOR 0
 
 /** The libserialport package 'minor' version number. */
-#define SP_PACKAGE_VERSION_MINOR 1
+#define SP_PACKAGE_VERSION_MINOR 2
 
 /** The libserialport package 'micro' version number. */
 #define SP_PACKAGE_VERSION_MICRO 0
 
 /** The libserialport package version ("major.minor.micro") as string. */
-#define SP_PACKAGE_VERSION_STRING "0.1.0"
+#define SP_PACKAGE_VERSION_STRING "0.2.0"
 
 /*
  * Library/libtool version macros (can be used for conditional compilation).

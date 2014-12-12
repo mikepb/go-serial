@@ -20,7 +20,6 @@
 
 #ifdef __linux__
 #define _BSD_SOURCE // for timeradd, timersub, timercmp
-#define _XOPEN_SOURCE 700 // for readlinkat
 #endif
 
 #include <string.h>
@@ -37,7 +36,11 @@
 #include <tchar.h>
 #include <setupapi.h>
 #include <cfgmgr32.h>
+#undef DEFINE_GUID
+#define DEFINE_GUID(name,l,w1,w2,b1,b2,b3,b4,b5,b6,b7,b8) \
+	static const GUID name = { l,w1,w2,{ b1,b2,b3,b4,b5,b6,b7,b8 } }
 #include <usbioctl.h>
+#include <usbiodef.h>
 #else
 #include <limits.h>
 #include <termios.h>
@@ -75,7 +78,7 @@
 #endif
 
 /* Non-standard baudrates are not available everywhere. */
-#if defined(HAVE_TERMIOS_SPEED) || defined(HAVE_TERMIOS2_SPEED)
+#if (defined(HAVE_TERMIOS_SPEED) || defined(HAVE_TERMIOS2_SPEED)) && defined(HAVE_BOTHER)
 #define USE_TERMIOS_SPEED
 #endif
 

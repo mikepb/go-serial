@@ -85,6 +85,7 @@ SP_API enum sp_return sp_get_port_by_name(const char *portname, struct sp_port *
 	memcpy(port->name, portname, len);
 
 #ifdef _WIN32
+	port->usb_path = NULL;
 	port->hdl = INVALID_HANDLE_VALUE;
 #else
 	port->fd = -1;
@@ -402,7 +403,7 @@ SP_API enum sp_return sp_open(struct sp_port *port, enum sp_mode flags)
 
 	CHECK_PORT();
 
-	if (flags > (SP_MODE_READ | SP_MODE_WRITE))
+	if (flags > SP_MODE_READ_WRITE)
 		RETURN_ERROR(SP_ERR_ARG, "Invalid flags");
 
 	DEBUG_FMT("Opening port %s", port->name);
@@ -479,7 +480,7 @@ SP_API enum sp_return sp_open(struct sp_port *port, enum sp_mode flags)
 	int flags_local = O_NONBLOCK | O_NOCTTY;
 
 	/* Map 'flags' to the OS-specific settings. */
-	if (flags & (SP_MODE_READ | SP_MODE_WRITE))
+	if ((flags & SP_MODE_READ_WRITE) == SP_MODE_READ_WRITE)
 		flags_local |= O_RDWR;
 	else if (flags & SP_MODE_READ)
 		flags_local |= O_RDONLY;
@@ -618,11 +619,11 @@ SP_API enum sp_return sp_flush(struct sp_port *port, enum sp_buffer buffers)
 		RETURN_FAIL("PurgeComm() failed");
 #else
 	int flags = 0;
-	if (buffers & SP_BUF_BOTH)
+	if (buffers == SP_BUF_BOTH)
 		flags = TCIOFLUSH;
-	else if (buffers & SP_BUF_INPUT)
+	else if (buffers == SP_BUF_INPUT)
 		flags = TCIFLUSH;
-	else if (buffers & SP_BUF_OUTPUT)
+	else if (buffers == SP_BUF_OUTPUT)
 		flags = TCOFLUSH;
 
 	/* Returns 0 upon success, -1 upon failure. */
