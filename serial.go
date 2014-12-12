@@ -53,7 +53,7 @@ import (
 )
 
 // Debug flag
-const Debug = true
+const Debug = false
 
 const (
 	// Port access modes
