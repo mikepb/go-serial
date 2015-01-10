@@ -156,6 +156,11 @@ type Options struct {
 	StopBits    int // number of stop bits (1, 2)
 	Parity      int // none, odd, even, mark, space
 	FlowControl int // none, xonxoff, rtscts, dtrdsr
+
+	RTS int
+	CTS int
+	DTR int
+	DSR int
 }
 
 // Serial port.
@@ -527,15 +532,52 @@ func (p *Port) Apply(o *Options) (err error) {
 	// set parity
 	if o.Parity != 0 {
 		cparity := parity2c(o.Parity)
-		err = errmsg(C.sp_set_config_parity(conf, cparity))
-		if err != nil {
+		if err = errmsg(C.sp_set_config_parity(conf, cparity)); err != nil {
 			return
 		}
 	}
 
 	// set flow control
 	if o.FlowControl != 0 {
-		p.SetFlowControl(o.FlowControl)
+		cfc, err := flow2c(o.FlowControl)
+		if err != nil {
+			return err
+		}
+		if err = errmsg(C.sp_set_config_flowcontrol(conf, cfc)); err != nil {
+			return err
+		}
+	}
+
+	// set RTS
+	if o.RTS != 0 {
+		crts := rts2c(o.RTS)
+		if err = errmsg(C.sp_set_config_rts(conf, crts)); err != nil {
+			return
+		}
+	}
+
+	// set CTS
+	if o.CTS != 0 {
+		ccts := cts2c(o.CTS)
+		if err = errmsg(C.sp_set_config_cts(conf, ccts)); err != nil {
+			return
+		}
+	}
+
+	// set DTR
+	if o.DTR != 0 {
+		cdtr := dtr2c(o.DTR)
+		if err = errmsg(C.sp_set_config_dtr(conf, cdtr)); err != nil {
+			return
+		}
+	}
+
+	// set DSR
+	if o.DSR != 0 {
+		cdsr := dsr2c(o.DSR)
+		if err = errmsg(C.sp_set_config_dsr(conf, cdsr)); err != nil {
+			return
+		}
 	}
 
 	// apply config
@@ -890,8 +932,19 @@ func xon2c(xon int) C.enum_sp_xonxoff {
 // opened for this operation. Call p.ApplyConfig() to apply the
 // change.
 func (p *Port) SetFlowControl(fc int) error {
-	var cfc C.enum_sp_flowcontrol
+	cfc, err := flow2c(fc)
+	if err != nil {
+		return err
+	}
 
+	if err := errmsg(C.sp_set_config_flowcontrol(p.c, cfc)); err != nil {
+		return err
+	}
+
+	return p.getConf()
+}
+
+func flow2c(fc int) (cfc C.enum_sp_flowcontrol, err error) {
 	switch fc {
 	case FLOWCONTROL_NONE:
 		cfc = C.SP_FLOWCONTROL_NONE
@@ -902,14 +955,9 @@ func (p *Port) SetFlowControl(fc int) error {
 	case FLOWCONTROL_DTRDSR:
 		cfc = C.SP_FLOWCONTROL_DTRDSR
 	default:
-		return ErrInvalidArguments
+		err = ErrInvalidArguments
 	}
-
-	if err := errmsg(C.sp_set_config_flowcontrol(p.c, cfc)); err != nil {
-		return err
-	}
-
-	return p.getConf()
+	return
 }
 
 // Implementation of io.Reader interface.
@@ -921,23 +969,22 @@ func (p *Port) Read(b []byte) (int, error) {
 		start = time.Now()
 	}
 
+	buf, size := unsafe.Pointer(&b[0]), C.size_t(len(b))
+
 	if p.readDeadline.IsZero() {
 
 		// no deadline
-		c = C.sp_blocking_read(
-			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)), 0)
+		c = C.sp_blocking_read(p.p, buf, size, 0)
 
 	} else if millis := deadline2millis(p.readDeadline); millis <= 0 {
 
 		// call nonblocking read
-		c = C.sp_nonblocking_read(
-			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)))
+		c = C.sp_nonblocking_read(p.p, buf, size)
 
 	} else {
 
 		// call blocking read
-		c = C.sp_blocking_read(
-			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)), C.uint(millis))
+		c = C.sp_blocking_read(p.p, buf, size, C.uint(millis))
 
 	}
 
@@ -969,23 +1016,22 @@ func (p *Port) Write(b []byte) (int, error) {
 		start = time.Now()
 	}
 
+	buf, size := unsafe.Pointer(&b[0]), C.size_t(len(b))
+
 	if p.writeDeadline.IsZero() {
 
 		// no deadline
-		c = C.sp_blocking_write(
-			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)), 0)
+		c = C.sp_blocking_write(p.p, buf, size, 0)
 
 	} else if millis := deadline2millis(p.writeDeadline); millis <= 0 {
 
 		// call nonblocking write
-		c = C.sp_nonblocking_write(
-			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)))
+		c = C.sp_nonblocking_write(p.p, buf, size)
 
 	} else {
 
 		// call blocking write
-		c = C.sp_blocking_write(
-			p.p, unsafe.Pointer(&b[0]), C.size_t(len(b)), C.uint(millis))
+		c = C.sp_blocking_write(p.p, buf, size, C.uint(millis))
 
 	}
 
