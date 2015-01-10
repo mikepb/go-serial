@@ -37,8 +37,23 @@ package serial
 /*
 #cgo CFLAGS: -g -O2 -Wall -Wextra -DSP_PRIV= -DSP_API=
 #cgo darwin LDFLAGS: -framework IOKit -framework CoreFoundation
+
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include "libserialport.h"
+
+void debug_handler(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    vfprintf(stderr, fmt, args);
+    va_end(args);
+}
+
+void setdebug(int enable) {
+	sp_set_debug_handler(enable ? debug_handler : NULL);
+}
+
 */
 import "C"
 
@@ -273,6 +288,15 @@ func deadline2millis(deadline time.Time) int64 {
 	}
 
 	return millis
+}
+
+// Print libserialport debug messages to stderr.
+func SetDebug(enable bool) {
+	if enable {
+		C.setdebug(1)
+	} else {
+		C.setdebug(0)
+	}
 }
 
 // Get a port by name.
