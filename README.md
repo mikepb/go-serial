@@ -24,7 +24,6 @@ func main() {
     log.Panic(err)
   }
 
-  // optional, will automatically close when garbage collected
   defer p.Close()
 
   buf := make([]byte, 1)

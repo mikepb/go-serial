@@ -6,30 +6,30 @@ such as the Arduino platform.
 
 Example Usage
 
-  package main
+	package main
 
-  import (
-    "github.com/mikepb/go-serial"
-    "log"
-  )
+	import (
+	  "github.com/mikepb/go-serial"
+	  "log"
+	)
 
-  func main() {
-    p, err := serial.Open("/dev/tty",
-      serial.Options{BitRate: 115200})
-    if err != nil {
-      log.Panic(err)
-    }
+	func main() {
+	  options := serial.RawOptions
+	  options.BitRate = 115200
+	  p, err := options.Open("/dev/tty")
+	  if err != nil {
+	    log.Panic(err)
+	  }
 
-    // optional, will automatically close when garbage collected
-    defer p.Close()
+	  defer p.Close()
 
-    buf := make([]byte, 1)
-    if c, err := p.Read(buf); err != nil {
-      log.Panic(err)
-    } else {
-      log.Println(buf)
-    }
-  }
+	  buf := make([]byte, 1)
+	  if c, err := p.Read(buf); err != nil {
+	    log.Panic(err)
+	  } else {
+	    log.Println(buf)
+	  }
+	}
 
 */
 package serial
