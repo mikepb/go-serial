@@ -23,6 +23,16 @@
 #include "libserialport.h"
 #include "libserialport_internal.h"
 
+char *my_strdup(const char *s) {
+    char *p = malloc(strlen(s) + 1);
+    if(p) { strcpy(p, s); }
+    return p;
+}
+
+/* this goes in whatever header defines my_strdup */
+char *my_strdup(const char *s);
+#define strdup(x) my_strdup(x)
+
 /* USB path is a string of at most 8 decimal numbers < 128 separated by dots */
 #define MAX_USB_PATH  (8*3 + 7*1 + 1)
 
