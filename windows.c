@@ -150,7 +150,7 @@ static char *get_string_descriptor(HANDLE hub_device, ULONG connection_index,
 }
 
 static void enumerate_hub_ports(struct sp_port *port, HANDLE hub_device,
-                                ULONG nb_ports, char *parent_path, DEVINST dev_inst))
+                                ULONG nb_ports, char *parent_path, DEVINST dev_inst)
 {
 	char path[MAX_USB_PATH];
 	ULONG index = 0;
