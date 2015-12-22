@@ -37,6 +37,7 @@ package serial
 /*
 #cgo CFLAGS: -g -O2 -Wall -Wextra -DSP_PRIV= -DSP_API=
 #cgo darwin LDFLAGS: -framework IOKit -framework CoreFoundation
+#cgo windows LDFLAGS: -lsetupapi
 
 #include <stdarg.h>
 #include <stdio.h>
