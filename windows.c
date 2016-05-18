@@ -459,18 +459,6 @@ SP_PRIV enum sp_return get_port_details(struct sp_port *port)
 
 			port->usb_path = strdup(usb_path);
 
-			/* wake up the USB device to be able to read string descriptor */
-			char *escaped_port_name;
-			HANDLE handle;
-			if (!(escaped_port_name = malloc(strlen(port->name) + 5)))
-				RETURN_ERROR(SP_ERR_MEM, "Escaped port name malloc failed");
-			sprintf(escaped_port_name, "\\\\.\\%s", port->name);
-			handle = CreateFile(escaped_port_name, GENERIC_READ, 0, 0,
-			                    OPEN_EXISTING,
-			                    FILE_ATTRIBUTE_NORMAL|FILE_FLAG_OVERLAPPED, 0);
-			free(escaped_port_name);
-			CloseHandle(handle);
-
 			/* retrieve USB device details from the device descriptor */
 			get_usb_details(port, device_info_data.DevInst);
 		}
