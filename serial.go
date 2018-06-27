@@ -184,6 +184,8 @@ type Port struct {
 	c             *C.struct_sp_port_config
 	readDeadline  time.Time
 	writeDeadline time.Time
+	readTimeout   time.Duration
+	writeTimeout  time.Duration
 }
 
 // Implementation of net.Addr
@@ -285,6 +287,20 @@ func deadline2millis(deadline time.Time) int64 {
 
 	if Debug {
 		log.Printf("timeout: %d ns %d ms", delta, millis)
+	}
+
+	return millis
+}
+
+//
+func timeout2millis(timeout time.Duration) int64 {
+	duration := timeout + time.Millisecond - time.Nanosecond
+	duration /= time.Millisecond
+
+	millis := int64(duration)
+
+	if Debug {
+		log.Printf("timeout: %d ms", millis)
 	}
 
 	return millis
@@ -995,7 +1011,12 @@ func (p *Port) Read(b []byte) (int, error) {
 
 	buf, size := unsafe.Pointer(&b[0]), C.size_t(len(b))
 
-	if p.readDeadline.IsZero() {
+	if millis := timeout2millis(p.readTimeout); millis > 0 {
+
+		// call blocking read
+		c = C.sp_blocking_read(p.p, buf, size, C.uint(millis))
+	
+	} else if p.readDeadline.IsZero() {
 
 		// no deadline
 		c = C.sp_blocking_read(p.p, buf, size, 0)
@@ -1042,7 +1063,12 @@ func (p *Port) Write(b []byte) (int, error) {
 
 	buf, size := unsafe.Pointer(&b[0]), C.size_t(len(b))
 
-	if p.writeDeadline.IsZero() {
+	if millis := timeout2millis(p.writeTimeout); millis > 0 {
+
+		// call blocking write
+		c = C.sp_blocking_write(p.p, buf, size, C.uint(millis))
+
+	} else if p.writeDeadline.IsZero() {
 
 		// no deadline
 		c = C.sp_blocking_write(p.p, buf, size, 0)
@@ -1095,6 +1121,13 @@ func (p *Port) RemoteAddr() net.Addr {
 func (p *Port) SetDeadline(t time.Time) error {
 	p.readDeadline = t
 	p.writeDeadline = t
+	return nil
+}
+
+// Set timeout
+func (p *Port) SetTimeout(t time.Duration) error {
+	p.readTimeout = t
+	p.writeTimeout = t
 	return nil
 }
 
