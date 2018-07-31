@@ -27,7 +27,7 @@ func main() {
   defer p.Close()
 
   buf := make([]byte, 1)
-  if c, err := p.Read(buf); err != nil {
+  if _, err := p.Read(buf); err != nil {
     log.Panic(err)
   } else {
     log.Println(buf)
