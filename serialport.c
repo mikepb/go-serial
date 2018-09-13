@@ -21,6 +21,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef SP_NO_W 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wall"
+#pragma GCC diagnostic warning "-Wextra"
+#endif
+
 #include "libserialport.h"
 #include "libserialport_internal.h"
 
@@ -343,6 +349,7 @@ SP_API enum sp_return sp_list_ports(struct sp_port ***list_ptr)
 		RETURN_OK();
 	case SP_ERR_SUPP:
 		DEBUG_ERROR(SP_ERR_SUPP, "Enumeration not supported on this platform");
+		__attribute__ ((fallthrough));
 	default:
 		if (list)
 			sp_free_port_list(list);
@@ -2317,4 +2324,7 @@ SP_API const char *sp_get_lib_version_string(void)
 	return SP_LIB_VERSION_STRING;
 }
 
+#ifndef SP_NO_W 
+#pragma GCC diagnostic pop
+#endif
 /** @} */
