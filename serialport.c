@@ -21,6 +21,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef SP_NO_W 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wall"
+#pragma GCC diagnostic warning "-Wextra"
+#endif
+
 #include "libserialport.h"
 #include "libserialport_internal.h"
 
@@ -910,9 +916,11 @@ SP_API enum sp_return sp_blocking_read(struct sp_port *port, void *buf,
 	}
 
 	/* Start background operation for subsequent events. */
-	if (WaitCommEvent(port->hdl, &port->events, &port->wait_ovl) == 0) {
-		if (GetLastError() != ERROR_IO_PENDING)
-			RETURN_FAIL("WaitCommEvent() failed");
+	if (bytes_read > 0) {
+		if (WaitCommEvent(port->hdl, &port->events, &port->wait_ovl) == 0) {
+			if (GetLastError() != ERROR_IO_PENDING)
+				RETURN_FAIL("WaitCommEvent() failed");
+		}
 	}
 
 	RETURN_INT(bytes_read);
@@ -2317,4 +2325,7 @@ SP_API const char *sp_get_lib_version_string(void)
 	return SP_LIB_VERSION_STRING;
 }
 
+#ifndef SP_NO_W 
+#pragma GCC diagnostic pop
+#endif
 /** @} */

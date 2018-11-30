@@ -9,7 +9,7 @@ Example Usage
 	package main
 
 	import (
-	  "github.com/mikepb/go-serial"
+	  "github.com/FlavorJ/go-serial"
 	  "log"
 	)
 
@@ -35,8 +35,9 @@ Example Usage
 package serial
 
 /*
-#cgo CFLAGS: -g -O2 -Wall -Wextra -DSP_PRIV= -DSP_API=
+#cgo CFLAGS: -g -O2 -DSP_PRIV= -DSP_API=
 #cgo darwin LDFLAGS: -framework IOKit -framework CoreFoundation
+#cgo windows LDFLAGS: -lsetupapi
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -61,7 +62,6 @@ import (
 	"bytes"
 	"log"
 	"net"
-	"reflect"
 	"runtime"
 	"time"
 	"unsafe"
@@ -273,22 +273,12 @@ func (p *Port) free() {
 	p.c = nil
 }
 
-// calculate milliseconds until deadline (rounded up)
-func deadline2millis(deadline time.Time) int64 {
-	delta := deadline.Sub(time.Now())
-
-	duration := time.Duration(delta.Nanoseconds())
-	duration += duration + time.Millisecond - time.Nanosecond
-	duration /= time.Millisecond
-
-	millis := int64(duration)
-
-	if Debug {
-		log.Printf("timeout: %d ns %d ms", delta, millis)
-	}
-
-	return millis
+// durationToTime return how long a duration there is to the deadline
+func durationToTime(deadline time.Time) time.Duration {
+	return deadline.Sub(time.Now())
 }
+
+
 
 // Print libserialport debug messages to stderr.
 func SetDebug(enable bool) {
@@ -984,95 +974,125 @@ func flow2c(fc int) (cfc C.enum_sp_flowcontrol, err error) {
 	return
 }
 
-// Implementation of io.Reader interface.
-func (p *Port) Read(b []byte) (int, error) {
-	var c int32
-	var start time.Time
+func sp_blocking_write(p *Port, b []byte, timeout time.Duration)(n int, err error) {
+	size := len(b)
 
-	if Debug {
-		start = time.Now()
+	cbuf := unsafe.Pointer(&b[0])
+	csize := C.size_t(len(b))
+	cmillitimeout := C.uint(timeout / time.Millisecond)
+	cresult := C.sp_blocking_write(p.p, cbuf, csize, cmillitimeout)
+
+	if cresult < 0 {
+		return 0, errmsg(cresult)
 	}
 
-	buf, size := unsafe.Pointer(&b[0]), C.size_t(len(b))
+	n = int(cresult)
 
-	if p.readDeadline.IsZero() {
-
-		// no deadline
-		c = C.sp_blocking_read(p.p, buf, size, 0)
-
-	} else if millis := deadline2millis(p.readDeadline); millis <= 0 {
-
-		// call nonblocking read
-		c = C.sp_nonblocking_read(p.p, buf, size)
-
-	} else {
-
-		// call blocking read
-		c = C.sp_blocking_read(p.p, buf, size, C.uint(millis))
-
-	}
-
-	if Debug {
-		log.Printf("read time: %d ns", time.Since(start).Nanoseconds())
-	}
-
-	n := int(c)
-
-	// check for error
-	if n < 0 {
-		return 0, errmsg(c)
-	} else if n != len(b) {
+	if n < size {
 		return n, ErrTimeout
 	}
-
-	// update slice length
-	reflect.ValueOf(&b).Elem().SetLen(int(c))
 
 	return n, nil
 }
 
-// Implementation of io.Writer interface.
-func (p *Port) Write(b []byte) (int, error) {
-	var c int32
-	var start time.Time
-
-	if Debug {
-		start = time.Now()
-	}
-
-	buf, size := unsafe.Pointer(&b[0]), C.size_t(len(b))
-
-	if p.writeDeadline.IsZero() {
-
-		// no deadline
-		c = C.sp_blocking_write(p.p, buf, size, 0)
-
-	} else if millis := deadline2millis(p.writeDeadline); millis <= 0 {
-
-		// call nonblocking write
-		c = C.sp_nonblocking_write(p.p, buf, size)
-
-	} else {
-
-		// call blocking write
-		c = C.sp_blocking_write(p.p, buf, size, C.uint(millis))
-
-	}
-
-	if Debug {
-		log.Printf("write time: %d ns", time.Since(start).Nanoseconds())
-	}
-
-	n := int(c)
-
-	// check for error
-	if n < 0 {
+func sp_nonblocking_write(p *Port, b []byte)(n int, err error) {
+	buf := unsafe.Pointer(&b[0])
+	size := C.size_t(len(b))
+	c := C.sp_nonblocking_write(p.p, buf, size)
+	if c < 0 {
 		return 0, errmsg(c)
-	} else if n != len(b) {
+	}
+	n = int(c)
+	return n, nil
+}
+
+func sp_blocking_read(p *Port, b []byte, timeout time.Duration)(n int, err error) {
+
+	size := len(b)
+
+	cbuf := unsafe.Pointer(&b[0])
+	csize := C.size_t(len(b))
+	cmillitimeout := C.uint(timeout / time.Millisecond)
+	cresult := C.sp_blocking_read(p.p, cbuf, csize, cmillitimeout)
+
+	if cresult < 0 {
+		return 0, errmsg(cresult)
+	}
+
+	n = int(cresult)
+
+	if n < size {
 		return n, ErrTimeout
 	}
 
 	return n, nil
+}
+
+func sp_nonblocking_read(p *Port, b []byte)(n int, err error) {
+	buf := unsafe.Pointer(&b[0])
+	size := C.size_t(len(b))
+	c := C.sp_nonblocking_read(p.p, buf, size)
+	if c < 0 {
+		return 0, errmsg(c)
+	}
+	n = int(c)
+	return n, nil
+}
+
+// Implementation of io.Reader interface.
+func (p *Port) Read(b []byte) (int, error) {
+
+	if Debug {
+		start := time.Now()
+		defer func() {
+			log.Printf("write time: %d ns", time.Since(start).Nanoseconds())
+		}()
+	}
+
+	if p.readDeadline.IsZero() {
+
+		// no deadline
+		return sp_blocking_read(p, b, 0)
+
+	} else if timeout := durationToTime(p.readDeadline); timeout <= 0 {
+
+		// call nonblocking write
+		return sp_nonblocking_read(p, b)
+
+	} else {
+
+		// call blocking write
+		return sp_blocking_read(p, b, timeout)
+
+	}
+}
+
+// Implementation of io.Writer interface.
+func (p *Port) Write(b []byte) (n int, err error) {
+
+	if Debug {
+		start := time.Now()
+		defer func() {
+			log.Printf("write time: %d ns", time.Since(start).Nanoseconds())
+		}()
+	}
+
+	if p.writeDeadline.IsZero() {
+
+		// no deadline
+		return sp_blocking_write(p, b, 0)
+
+	} else if timeout := durationToTime(p.writeDeadline); timeout <= 0 {
+
+		// call nonblocking write
+		return sp_nonblocking_write(p, b)
+
+	} else {
+
+		// call blocking write
+		return sp_blocking_write(p, b, timeout)
+
+	}
 }
 
 // WriteString is like Write, but writes the contents of string s
