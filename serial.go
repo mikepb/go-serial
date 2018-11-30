@@ -9,7 +9,7 @@ Example Usage
 	package main
 
 	import (
-	  "github.com/mikepb/go-serial"
+	  "github.com/FlavorJ/go-serial"
 	  "log"
 	)
 
