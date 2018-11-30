@@ -35,7 +35,7 @@ Example Usage
 package serial
 
 /*
-#cgo CFLAGS: -g -O2 -Wall -Wextra -DSP_PRIV= -DSP_API=
+#cgo CFLAGS: -g -O2 -DSP_PRIV= -DSP_API=
 #cgo darwin LDFLAGS: -framework IOKit -framework CoreFoundation
 #cgo windows LDFLAGS: -lsetupapi
 
