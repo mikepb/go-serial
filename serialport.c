@@ -349,7 +349,6 @@ SP_API enum sp_return sp_list_ports(struct sp_port ***list_ptr)
 		RETURN_OK();
 	case SP_ERR_SUPP:
 		DEBUG_ERROR(SP_ERR_SUPP, "Enumeration not supported on this platform");
-		__attribute__ ((fallthrough));
 	default:
 		if (list)
 			sp_free_port_list(list);
