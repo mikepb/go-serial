@@ -970,6 +970,9 @@ SP_API enum sp_return sp_blocking_read(struct sp_port *port, void *buf,
 			else
 				/* This is an actual failure. */
 				RETURN_FAIL("read() failed");
+		} else if (result == 0) {
+			/* unexpected EOF */
+			RETURN_FAIL("Unexpected EOF");
 		}
 
 		bytes_read += result;
