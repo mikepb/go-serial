@@ -30,14 +30,40 @@ const struct std_baudrate std_baudrates[] = {
 	 * The baudrates 50/75/134/150/200/1800/230400/460800 do not seem to
 	 * have documented CBR_* macros.
 	 */
-	BAUD(110), BAUD(300), BAUD(600), BAUD(1200), BAUD(2400), BAUD(4800),
-	BAUD(9600), BAUD(14400), BAUD(19200), BAUD(38400), BAUD(57600),
-	BAUD(115200), BAUD(128000), BAUD(256000),
+	BAUD(110),
+	BAUD(300),
+	BAUD(600),
+	BAUD(1200),
+	BAUD(2400),
+	BAUD(4800),
+	BAUD(9600),
+	BAUD(14400),
+	BAUD(19200),
+	BAUD(38400),
+	BAUD(57600),
+	BAUD(115200),
+	BAUD(128000),
+	BAUD(256000),
 #else
-	BAUD(50), BAUD(75), BAUD(110), BAUD(134), BAUD(150), BAUD(200),
-	BAUD(300), BAUD(600), BAUD(1200), BAUD(1800), BAUD(2400), BAUD(4800),
-	BAUD(9600), BAUD(19200), BAUD(38400), BAUD(57600), BAUD(115200),
+	BAUD(50),
+	BAUD(75),
+	BAUD(110),
+	BAUD(134),
+	BAUD(150),
+	BAUD(200),
+	BAUD(300),
+	BAUD(600),
+	BAUD(1200),
+	BAUD(1800),
+	BAUD(2400),
+	BAUD(4800),
+	BAUD(9600),
+	BAUD(19200),
+	BAUD(38400),
+	BAUD(57600),
+	BAUD(115200),
 	BAUD(230400),
+	BAUD(921600),
 #if !defined(__APPLE__) && !defined(__OpenBSD__)
 	BAUD(460800),
 #endif
@@ -47,10 +73,10 @@ const struct std_baudrate std_baudrates[] = {
 void (*sp_debug_handler)(const char *format, ...) = sp_default_debug_handler;
 
 static enum sp_return get_config(struct sp_port *port, struct port_data *data,
-	struct sp_port_config *config);
+								 struct sp_port_config *config);
 
 static enum sp_return set_config(struct sp_port *port, struct port_data *data,
-	const struct sp_port_config *config);
+								 const struct sp_port_config *config);
 
 SP_API enum sp_return sp_get_port_by_name(const char *portname, struct sp_port **port_ptr)
 {
@@ -77,7 +103,8 @@ SP_API enum sp_return sp_get_port_by_name(const char *portname, struct sp_port *
 
 	len = strlen(portname) + 1;
 
-	if (!(port->name = malloc(len))) {
+	if (!(port->name = malloc(len)))
+	{
 		free(port);
 		RETURN_ERROR(SP_ERR_MEM, "Port name malloc failed");
 	}
@@ -103,7 +130,8 @@ SP_API enum sp_return sp_get_port_by_name(const char *portname, struct sp_port *
 	port->bluetooth_address = NULL;
 
 #ifndef NO_PORT_METADATA
-	if ((ret = get_port_details(port)) != SP_OK) {
+	if ((ret = get_port_details(port)) != SP_OK)
+	{
 		sp_free_port(port);
 		return ret;
 	}
@@ -145,7 +173,7 @@ SP_API enum sp_transport sp_get_port_transport(struct sp_port *port)
 }
 
 SP_API enum sp_return sp_get_port_usb_bus_address(const struct sp_port *port,
-                                                  int *usb_bus,int *usb_address)
+												  int *usb_bus, int *usb_address)
 {
 	TRACE("%p", port);
 
@@ -156,14 +184,16 @@ SP_API enum sp_return sp_get_port_usb_bus_address(const struct sp_port *port,
 	if (port->usb_bus < 0 || port->usb_address < 0)
 		RETURN_ERROR(SP_ERR_SUPP, "Bus and address values are not available");
 
-	if (usb_bus)      *usb_bus     = port->usb_bus;
-	if (usb_address)  *usb_address = port->usb_address;
+	if (usb_bus)
+		*usb_bus = port->usb_bus;
+	if (usb_address)
+		*usb_address = port->usb_address;
 
 	RETURN_OK();
 }
 
 SP_API enum sp_return sp_get_port_usb_vid_pid(const struct sp_port *port,
-                                              int *usb_vid, int *usb_pid)
+											  int *usb_vid, int *usb_pid)
 {
 	TRACE("%p", port);
 
@@ -174,8 +204,10 @@ SP_API enum sp_return sp_get_port_usb_vid_pid(const struct sp_port *port,
 	if (port->usb_vid < 0 || port->usb_pid < 0)
 		RETURN_ERROR(SP_ERR_SUPP, "VID:PID values are not available");
 
-	if (usb_vid)  *usb_vid = port->usb_vid;
-	if (usb_pid)  *usb_pid = port->usb_pid;
+	if (usb_vid)
+		*usb_vid = port->usb_vid;
+	if (usb_pid)
+		*usb_pid = port->usb_pid;
 
 	RETURN_OK();
 }
@@ -214,15 +246,14 @@ SP_API char *sp_get_port_bluetooth_address(const struct sp_port *port)
 {
 	TRACE("%p", port);
 
-	if (!port || port->transport != SP_TRANSPORT_BLUETOOTH
-	    || !port->bluetooth_address)
+	if (!port || port->transport != SP_TRANSPORT_BLUETOOTH || !port->bluetooth_address)
 		return NULL;
 
 	RETURN_STRING(port->bluetooth_address);
 }
 
 SP_API enum sp_return sp_get_port_handle(const struct sp_port *port,
-                                         void *result_ptr)
+										 void *result_ptr)
 {
 	TRACE("%p, %p", port, result_ptr);
 
@@ -241,7 +272,7 @@ SP_API enum sp_return sp_get_port_handle(const struct sp_port *port,
 }
 
 SP_API enum sp_return sp_copy_port(const struct sp_port *port,
-                                   struct sp_port **copy_ptr)
+								   struct sp_port **copy_ptr)
 {
 	TRACE("%p, %p", port, copy_ptr);
 
@@ -265,7 +296,8 @@ SP_API void sp_free_port(struct sp_port *port)
 {
 	TRACE("%p", port);
 
-	if (!port) {
+	if (!port)
+	{
 		DEBUG("Null port");
 		RETURN();
 	}
@@ -295,12 +327,13 @@ SP_API void sp_free_port(struct sp_port *port)
 }
 
 SP_PRIV struct sp_port **list_append(struct sp_port **list,
-                                     const char *portname)
+									 const char *portname)
 {
 	void *tmp;
 	unsigned int count;
 
-	for (count = 0; list[count]; count++);
+	for (count = 0; list[count]; count++)
+		;
 	if (!(tmp = realloc(list, sizeof(struct sp_port *) * (count + 2))))
 		goto fail;
 	list = tmp;
@@ -337,7 +370,8 @@ SP_API enum sp_return sp_list_ports(struct sp_port ***list_ptr)
 	ret = list_ports(&list);
 #endif
 
-	switch (ret) {
+	switch (ret)
+	{
 	case SP_OK:
 		*list_ptr = list;
 		RETURN_OK();
@@ -357,7 +391,8 @@ SP_API void sp_free_port_list(struct sp_port **list)
 
 	TRACE("%p", list);
 
-	if (!list) {
+	if (!list)
+	{
 		DEBUG("Null list");
 		RETURN();
 	}
@@ -371,27 +406,35 @@ SP_API void sp_free_port_list(struct sp_port **list)
 	RETURN();
 }
 
-#define CHECK_PORT() do { \
-	if (port == NULL) \
-		RETURN_ERROR(SP_ERR_ARG, "Null port"); \
-	if (port->name == NULL) \
-		RETURN_ERROR(SP_ERR_ARG, "Null port name"); \
-} while (0)
+#define CHECK_PORT()                                    \
+	do                                                  \
+	{                                                   \
+		if (port == NULL)                               \
+			RETURN_ERROR(SP_ERR_ARG, "Null port");      \
+		if (port->name == NULL)                         \
+			RETURN_ERROR(SP_ERR_ARG, "Null port name"); \
+	} while (0)
 #ifdef _WIN32
-#define CHECK_PORT_HANDLE() do { \
-	if (port->hdl == INVALID_HANDLE_VALUE) \
-		RETURN_ERROR(SP_ERR_ARG, "Invalid port handle"); \
-} while (0)
+#define CHECK_PORT_HANDLE()                                  \
+	do                                                       \
+	{                                                        \
+		if (port->hdl == INVALID_HANDLE_VALUE)               \
+			RETURN_ERROR(SP_ERR_ARG, "Invalid port handle"); \
+	} while (0)
 #else
-#define CHECK_PORT_HANDLE() do { \
-	if (port->fd < 0) \
-		RETURN_ERROR(SP_ERR_ARG, "Invalid port fd"); \
-} while (0)
+#define CHECK_PORT_HANDLE()                              \
+	do                                                   \
+	{                                                    \
+		if (port->fd < 0)                                \
+			RETURN_ERROR(SP_ERR_ARG, "Invalid port fd"); \
+	} while (0)
 #endif
-#define CHECK_OPEN_PORT() do { \
-	CHECK_PORT(); \
-	CHECK_PORT_HANDLE(); \
-} while (0)
+#define CHECK_OPEN_PORT()    \
+	do                       \
+	{                        \
+		CHECK_PORT();        \
+		CHECK_PORT_HANDLE(); \
+	} while (0)
 
 SP_API enum sp_return sp_open(struct sp_port *port, enum sp_mode flags)
 {
@@ -426,7 +469,7 @@ SP_API enum sp_return sp_open(struct sp_port *port, enum sp_mode flags)
 		desired_access |= GENERIC_WRITE;
 
 	port->hdl = CreateFile(escaped_port_name, desired_access, 0, 0,
-			 OPEN_EXISTING, flags_and_attributes, 0);
+						   OPEN_EXISTING, flags_and_attributes, 0);
 
 	free(escaped_port_name);
 
@@ -440,35 +483,41 @@ SP_API enum sp_return sp_open(struct sp_port *port, enum sp_mode flags)
 	port->timeouts.WriteTotalTimeoutMultiplier = 0;
 	port->timeouts.WriteTotalTimeoutConstant = 0;
 
-	if (SetCommTimeouts(port->hdl, &port->timeouts) == 0) {
+	if (SetCommTimeouts(port->hdl, &port->timeouts) == 0)
+	{
 		sp_close(port);
 		RETURN_FAIL("SetCommTimeouts() failed");
 	}
 
 	/* Prepare OVERLAPPED structures. */
-#define INIT_OVERLAPPED(ovl) do { \
-	memset(&port->ovl, 0, sizeof(port->ovl)); \
-	port->ovl.hEvent = INVALID_HANDLE_VALUE; \
-	if ((port->ovl.hEvent = CreateEvent(NULL, TRUE, TRUE, NULL)) \
-			== INVALID_HANDLE_VALUE) { \
-		sp_close(port); \
-		RETURN_FAIL(#ovl "CreateEvent() failed"); \
-	} \
-} while (0)
+#define INIT_OVERLAPPED(ovl)                                                                  \
+	do                                                                                        \
+	{                                                                                         \
+		memset(&port->ovl, 0, sizeof(port->ovl));                                             \
+		port->ovl.hEvent = INVALID_HANDLE_VALUE;                                              \
+		if ((port->ovl.hEvent = CreateEvent(NULL, TRUE, TRUE, NULL)) == INVALID_HANDLE_VALUE) \
+		{                                                                                     \
+			sp_close(port);                                                                   \
+			RETURN_FAIL(#ovl "CreateEvent() failed");                                         \
+		}                                                                                     \
+	} while (0)
 
 	INIT_OVERLAPPED(read_ovl);
 	INIT_OVERLAPPED(write_ovl);
 	INIT_OVERLAPPED(wait_ovl);
 
 	/* Set event mask for RX and error events. */
-	if (SetCommMask(port->hdl, EV_RXCHAR | EV_ERR) == 0) {
+	if (SetCommMask(port->hdl, EV_RXCHAR | EV_ERR) == 0)
+	{
 		sp_close(port);
 		RETURN_FAIL("SetCommMask() failed");
 	}
 
 	/* Start background operation for RX and error events. */
-	if (WaitCommEvent(port->hdl, &port->events, &port->wait_ovl) == 0) {
-		if (GetLastError() != ERROR_IO_PENDING) {
+	if (WaitCommEvent(port->hdl, &port->events, &port->wait_ovl) == 0)
+	{
+		if (GetLastError() != ERROR_IO_PENDING)
+		{
 			sp_close(port);
 			RETURN_FAIL("WaitCommEvent() failed");
 		}
@@ -493,7 +542,8 @@ SP_API enum sp_return sp_open(struct sp_port *port, enum sp_mode flags)
 
 	ret = get_config(port, &data, &config);
 
-	if (ret < 0) {
+	if (ret < 0)
+	{
 		sp_close(port);
 		RETURN_CODEVAL(ret);
 	}
@@ -551,7 +601,8 @@ SP_API enum sp_return sp_open(struct sp_port *port, enum sp_mode flags)
 
 	ret = set_config(port, &data, &config);
 
-	if (ret < 0) {
+	if (ret < 0)
+	{
 		sp_close(port);
 		RETURN_CODEVAL(ret);
 	}
@@ -574,11 +625,13 @@ SP_API enum sp_return sp_close(struct sp_port *port)
 	port->hdl = INVALID_HANDLE_VALUE;
 
 	/* Close event handles for overlapped structures. */
-#define CLOSE_OVERLAPPED(ovl) do { \
-	if (port->ovl.hEvent != INVALID_HANDLE_VALUE && \
-		CloseHandle(port->ovl.hEvent) == 0) \
-		RETURN_FAIL(# ovl "event CloseHandle() failed"); \
-} while (0)
+#define CLOSE_OVERLAPPED(ovl)                               \
+	do                                                      \
+	{                                                       \
+		if (port->ovl.hEvent != INVALID_HANDLE_VALUE &&     \
+			CloseHandle(port->ovl.hEvent) == 0)             \
+			RETURN_FAIL(#ovl "event CloseHandle() failed"); \
+	} while (0)
 	CLOSE_OVERLAPPED(read_ovl);
 	CLOSE_OVERLAPPED(write_ovl);
 	CLOSE_OVERLAPPED(wait_ovl);
@@ -605,7 +658,7 @@ SP_API enum sp_return sp_flush(struct sp_port *port, enum sp_buffer buffers)
 	const char *buffer_names[] = {"no", "input", "output", "both"};
 
 	DEBUG_FMT("Flushing %s buffers on port %s",
-		buffer_names[buffers], port->name);
+			  buffer_names[buffers], port->name);
 
 #ifdef _WIN32
 	DWORD flags = 0;
@@ -648,21 +701,28 @@ SP_API enum sp_return sp_drain(struct sp_port *port)
 	RETURN_OK();
 #else
 	int result;
-	while (1) {
+	while (1)
+	{
 #ifdef __ANDROID__
 		int arg = 1;
 		result = ioctl(port->fd, TCSBRK, &arg);
 #else
 		result = tcdrain(port->fd);
 #endif
-		if (result < 0) {
-			if (errno == EINTR) {
+		if (result < 0)
+		{
+			if (errno == EINTR)
+			{
 				DEBUG("tcdrain() was interrupted");
 				continue;
-			} else {
+			}
+			else
+			{
 				RETURN_FAIL("tcdrain() failed");
 			}
-		} else {
+		}
+		else
+		{
 			RETURN_OK();
 		}
 	}
@@ -670,7 +730,7 @@ SP_API enum sp_return sp_drain(struct sp_port *port)
 }
 
 SP_API enum sp_return sp_blocking_write(struct sp_port *port, const void *buf,
-                                        size_t count, unsigned int timeout)
+										size_t count, unsigned int timeout)
 {
 	TRACE("%p, %p, %d, %d", port, buf, count, timeout);
 
@@ -681,10 +741,10 @@ SP_API enum sp_return sp_blocking_write(struct sp_port *port, const void *buf,
 
 	if (timeout)
 		DEBUG_FMT("Writing %d bytes to port %s, timeout %d ms",
-			count, port->name, timeout);
+				  count, port->name, timeout);
 	else
 		DEBUG_FMT("Writing %d bytes to port %s, no timeout",
-			count, port->name);
+				  count, port->name);
 
 	if (count == 0)
 		RETURN_INT(0);
@@ -694,7 +754,8 @@ SP_API enum sp_return sp_blocking_write(struct sp_port *port, const void *buf,
 	BOOL result;
 
 	/* Wait for previous non-blocking write to complete, if any. */
-	if (port->writing) {
+	if (port->writing)
+	{
 		DEBUG("Waiting for previous write to complete");
 		result = GetOverlappedResult(port->hdl, &port->write_ovl, &bytes_written, TRUE);
 		port->writing = 0;
@@ -709,27 +770,34 @@ SP_API enum sp_return sp_blocking_write(struct sp_port *port, const void *buf,
 		RETURN_FAIL("SetCommTimeouts() failed");
 
 	/* Start write. */
-	if (WriteFile(port->hdl, buf, count, NULL, &port->write_ovl) == 0) {
-		if (GetLastError() == ERROR_IO_PENDING) {
+	if (WriteFile(port->hdl, buf, count, NULL, &port->write_ovl) == 0)
+	{
+		if (GetLastError() == ERROR_IO_PENDING)
+		{
 			DEBUG("Waiting for write to complete");
 			GetOverlappedResult(port->hdl, &port->write_ovl, &bytes_written, TRUE);
 			DEBUG_FMT("Write completed, %d/%d bytes written", bytes_written, count);
 			RETURN_INT(bytes_written);
-		} else {
+		}
+		else
+		{
 			RETURN_FAIL("WriteFile() failed");
 		}
-	} else {
+	}
+	else
+	{
 		DEBUG("Write completed immediately");
 		RETURN_INT(count);
 	}
 #else
 	size_t bytes_written = 0;
-	unsigned char *ptr = (unsigned char *) buf;
+	unsigned char *ptr = (unsigned char *)buf;
 	struct timeval start, delta, now, end = {0, 0};
 	fd_set fds;
 	int result;
 
-	if (timeout) {
+	if (timeout)
+	{
 		/* Get time at start of operation. */
 		gettimeofday(&start, NULL);
 		/* Define duration of timeout. */
@@ -745,23 +813,31 @@ SP_API enum sp_return sp_blocking_write(struct sp_port *port, const void *buf,
 		/* Wait until space is available. */
 		FD_ZERO(&fds);
 		FD_SET(port->fd, &fds);
-		if (timeout) {
+		if (timeout)
+		{
 			gettimeofday(&now, NULL);
-			if (timercmp(&now, &end, >)) {
+			if (timercmp(&now, &end, >))
+			{
 				DEBUG("write timed out");
 				RETURN_INT(bytes_written);
 			}
 			timersub(&end, &now, &delta);
 		}
 		result = select(port->fd + 1, NULL, &fds, NULL, timeout ? &delta : NULL);
-		if (result < 0) {
-			if (errno == EINTR) {
+		if (result < 0)
+		{
+			if (errno == EINTR)
+			{
 				DEBUG("select() call was interrupted, repeating");
 				continue;
-			} else {
+			}
+			else
+			{
 				RETURN_FAIL("select() failed");
 			}
-		} else if (result == 0) {
+		}
+		else if (result == 0)
+		{
 			DEBUG("write timed out");
 			RETURN_INT(bytes_written);
 		}
@@ -769,7 +845,8 @@ SP_API enum sp_return sp_blocking_write(struct sp_port *port, const void *buf,
 		/* Do write. */
 		result = write(port->fd, ptr, count - bytes_written);
 
-		if (result < 0) {
+		if (result < 0)
+		{
 			if (errno == EAGAIN)
 				/* This shouldn't happen because we did a select() first, but handle anyway. */
 				continue;
@@ -787,7 +864,7 @@ SP_API enum sp_return sp_blocking_write(struct sp_port *port, const void *buf,
 }
 
 SP_API enum sp_return sp_nonblocking_write(struct sp_port *port,
-                                           const void *buf, size_t count)
+										   const void *buf, size_t count)
 {
 	TRACE("%p, %p, %d", port, buf, count);
 
@@ -803,14 +880,18 @@ SP_API enum sp_return sp_nonblocking_write(struct sp_port *port,
 
 #ifdef _WIN32
 	DWORD written = 0;
-	BYTE *ptr = (BYTE *) buf;
+	BYTE *ptr = (BYTE *)buf;
 
 	/* Check whether previous write is complete. */
-	if (port->writing) {
-		if (HasOverlappedIoCompleted(&port->write_ovl)) {
+	if (port->writing)
+	{
+		if (HasOverlappedIoCompleted(&port->write_ovl))
+		{
 			DEBUG("Previous write completed");
 			port->writing = 0;
-		} else {
+		}
+		else
+		{
 			DEBUG("Previous write not complete");
 			/* Can't take a new write until the previous one finishes. */
 			RETURN_INT(0);
@@ -830,23 +911,32 @@ SP_API enum sp_return sp_nonblocking_write(struct sp_port *port,
 		port->pending_byte = *ptr++;
 
 		/* Start asynchronous write. */
-		if (WriteFile(port->hdl, &port->pending_byte, 1, NULL, &port->write_ovl) == 0) {
-			if (GetLastError() == ERROR_IO_PENDING) {
-				if (HasOverlappedIoCompleted(&port->write_ovl)) {
+		if (WriteFile(port->hdl, &port->pending_byte, 1, NULL, &port->write_ovl) == 0)
+		{
+			if (GetLastError() == ERROR_IO_PENDING)
+			{
+				if (HasOverlappedIoCompleted(&port->write_ovl))
+				{
 					DEBUG("Asynchronous write completed immediately");
 					port->writing = 0;
 					written++;
 					continue;
-				} else {
+				}
+				else
+				{
 					DEBUG("Asynchronous write running");
 					port->writing = 1;
 					RETURN_INT(++written);
 				}
-			} else {
+			}
+			else
+			{
 				/* Actual failure of some kind. */
 				RETURN_FAIL("WriteFile() failed");
 			}
-		} else {
+		}
+		else
+		{
 			DEBUG("Single byte written immediately");
 			written++;
 		}
@@ -867,7 +957,7 @@ SP_API enum sp_return sp_nonblocking_write(struct sp_port *port,
 }
 
 SP_API enum sp_return sp_blocking_read(struct sp_port *port, void *buf,
-                                       size_t count, unsigned int timeout)
+									   size_t count, unsigned int timeout)
 {
 	TRACE("%p, %p, %d, %d", port, buf, count, timeout);
 
@@ -878,10 +968,10 @@ SP_API enum sp_return sp_blocking_read(struct sp_port *port, void *buf,
 
 	if (timeout)
 		DEBUG_FMT("Reading %d bytes from port %s, timeout %d ms",
-			count, port->name, timeout);
+				  count, port->name, timeout);
 	else
 		DEBUG_FMT("Reading %d bytes from port %s, no timeout",
-			count, port->name);
+				  count, port->name);
 
 	if (count == 0)
 		RETURN_INT(0);
@@ -896,21 +986,28 @@ SP_API enum sp_return sp_blocking_read(struct sp_port *port, void *buf,
 		RETURN_FAIL("SetCommTimeouts() failed");
 
 	/* Start read. */
-	if (ReadFile(port->hdl, buf, count, NULL, &port->read_ovl) == 0) {
-		if (GetLastError() == ERROR_IO_PENDING) {
+	if (ReadFile(port->hdl, buf, count, NULL, &port->read_ovl) == 0)
+	{
+		if (GetLastError() == ERROR_IO_PENDING)
+		{
 			DEBUG("Waiting for read to complete");
 			GetOverlappedResult(port->hdl, &port->read_ovl, &bytes_read, TRUE);
 			DEBUG_FMT("Read completed, %d/%d bytes read", bytes_read, count);
-		} else {
+		}
+		else
+		{
 			RETURN_FAIL("ReadFile() failed");
 		}
-	} else {
+	}
+	else
+	{
 		DEBUG("Read completed immediately");
 		bytes_read = count;
 	}
 
 	/* Start background operation for subsequent events. */
-	if (WaitCommEvent(port->hdl, &port->events, &port->wait_ovl) == 0) {
+	if (WaitCommEvent(port->hdl, &port->events, &port->wait_ovl) == 0)
+	{
 		if (GetLastError() != ERROR_IO_PENDING)
 			RETURN_FAIL("WaitCommEvent() failed");
 	}
@@ -919,12 +1016,13 @@ SP_API enum sp_return sp_blocking_read(struct sp_port *port, void *buf,
 
 #else
 	size_t bytes_read = 0;
-	unsigned char *ptr = (unsigned char *) buf;
+	unsigned char *ptr = (unsigned char *)buf;
 	struct timeval start, delta, now, end = {0, 0};
 	fd_set fds;
 	int result;
 
-	if (timeout) {
+	if (timeout)
+	{
 		/* Get time at start of operation. */
 		gettimeofday(&start, NULL);
 		/* Define duration of timeout. */
@@ -940,7 +1038,8 @@ SP_API enum sp_return sp_blocking_read(struct sp_port *port, void *buf,
 		/* Wait until data is available. */
 		FD_ZERO(&fds);
 		FD_SET(port->fd, &fds);
-		if (timeout) {
+		if (timeout)
+		{
 			gettimeofday(&now, NULL);
 			if (timercmp(&now, &end, >))
 				/* Timeout has expired. */
@@ -948,14 +1047,20 @@ SP_API enum sp_return sp_blocking_read(struct sp_port *port, void *buf,
 			timersub(&end, &now, &delta);
 		}
 		result = select(port->fd + 1, &fds, NULL, NULL, timeout ? &delta : NULL);
-		if (result < 0) {
-			if (errno == EINTR) {
+		if (result < 0)
+		{
+			if (errno == EINTR)
+			{
 				DEBUG("select() call was interrupted, repeating");
 				continue;
-			} else {
+			}
+			else
+			{
 				RETURN_FAIL("select() failed");
 			}
-		} else if (result == 0) {
+		}
+		else if (result == 0)
+		{
 			DEBUG("read timed out");
 			RETURN_INT(bytes_read);
 		}
@@ -963,7 +1068,8 @@ SP_API enum sp_return sp_blocking_read(struct sp_port *port, void *buf,
 		/* Do read. */
 		result = read(port->fd, ptr, count - bytes_read);
 
-		if (result < 0) {
+		if (result < 0)
+		{
 			if (errno == EAGAIN)
 				/* This shouldn't happen because we did a select() first, but handle anyway. */
 				continue;
@@ -981,7 +1087,7 @@ SP_API enum sp_return sp_blocking_read(struct sp_port *port, void *buf,
 }
 
 SP_API enum sp_return sp_nonblocking_read(struct sp_port *port, void *buf,
-                                          size_t count)
+										  size_t count)
 {
 	TRACE("%p, %p, %d", port, buf, count);
 
@@ -1009,9 +1115,11 @@ SP_API enum sp_return sp_nonblocking_read(struct sp_port *port, void *buf,
 	if (GetOverlappedResult(port->hdl, &port->read_ovl, &bytes_read, TRUE) == 0)
 		RETURN_FAIL("GetOverlappedResult() failed");
 
-	if (bytes_read > 0) {
+	if (bytes_read > 0)
+	{
 		/* Start background operation for subsequent events. */
-		if (WaitCommEvent(port->hdl, &port->events, &port->wait_ovl) == 0) {
+		if (WaitCommEvent(port->hdl, &port->events, &port->wait_ovl) == 0)
+		{
 			if (GetLastError() != ERROR_IO_PENDING)
 				RETURN_FAIL("WaitCommEvent() failed");
 		}
@@ -1022,7 +1130,8 @@ SP_API enum sp_return sp_nonblocking_read(struct sp_port *port, void *buf,
 	ssize_t bytes_read;
 
 	/* Returns the number of bytes read, or -1 upon failure. */
-	if ((bytes_read = read(port->fd, buf, count)) < 0) {
+	if ((bytes_read = read(port->fd, buf, count)) < 0)
+	{
 		if (errno == EAGAIN)
 			/* No bytes available. */
 			bytes_read = 0;
@@ -1102,7 +1211,7 @@ SP_API enum sp_return sp_new_event_set(struct sp_event_set **result_ptr)
 }
 
 static enum sp_return add_handle(struct sp_event_set *event_set,
-		event_handle handle, enum sp_event mask)
+								 event_handle handle, enum sp_event mask)
 {
 	void *new_handles;
 	enum sp_event *new_masks;
@@ -1110,17 +1219,17 @@ static enum sp_return add_handle(struct sp_event_set *event_set,
 	TRACE("%p, %d, %d", event_set, handle, mask);
 
 	if (!(new_handles = realloc(event_set->handles,
-			sizeof(event_handle) * (event_set->count + 1))))
+								sizeof(event_handle) * (event_set->count + 1))))
 		RETURN_ERROR(SP_ERR_MEM, "handle array realloc() failed");
 
 	if (!(new_masks = realloc(event_set->masks,
-			sizeof(enum sp_event) * (event_set->count + 1))))
+							  sizeof(enum sp_event) * (event_set->count + 1))))
 		RETURN_ERROR(SP_ERR_MEM, "mask array realloc() failed");
 
 	event_set->handles = new_handles;
 	event_set->masks = new_masks;
 
-	((event_handle *) event_set->handles)[event_set->count] = handle;
+	((event_handle *)event_set->handles)[event_set->count] = handle;
 	event_set->masks[event_set->count] = mask;
 
 	event_set->count++;
@@ -1129,7 +1238,7 @@ static enum sp_return add_handle(struct sp_event_set *event_set,
 }
 
 SP_API enum sp_return sp_add_port_events(struct sp_event_set *event_set,
-	const struct sp_port *port, enum sp_event mask)
+										 const struct sp_port *port, enum sp_event mask)
 {
 	TRACE("%p, %p, %d", event_set, port, mask);
 
@@ -1162,7 +1271,8 @@ SP_API void sp_free_event_set(struct sp_event_set *event_set)
 {
 	TRACE("%p", event_set);
 
-	if (!event_set) {
+	if (!event_set)
+	{
 		DEBUG("Null event set");
 		RETURN();
 	}
@@ -1180,7 +1290,7 @@ SP_API void sp_free_event_set(struct sp_event_set *event_set)
 }
 
 SP_API enum sp_return sp_wait(struct sp_event_set *event_set,
-                              unsigned int timeout)
+							  unsigned int timeout)
 {
 	TRACE("%p, %d", event_set, timeout);
 
@@ -1189,7 +1299,7 @@ SP_API enum sp_return sp_wait(struct sp_event_set *event_set,
 
 #ifdef _WIN32
 	if (WaitForMultipleObjects(event_set->count, event_set->handles, FALSE,
-			timeout ? timeout : INFINITE) == WAIT_FAILED)
+							   timeout ? timeout : INFINITE) == WAIT_FAILED)
 		RETURN_FAIL("WaitForMultipleObjects() failed");
 
 	RETURN_OK();
@@ -1202,8 +1312,9 @@ SP_API enum sp_return sp_wait(struct sp_event_set *event_set,
 	if (!(pollfds = malloc(sizeof(struct pollfd) * event_set->count)))
 		RETURN_ERROR(SP_ERR_MEM, "pollfds malloc() failed");
 
-	for (i = 0; i < event_set->count; i++) {
-		pollfds[i].fd = ((int *) event_set->handles)[i];
+	for (i = 0; i < event_set->count; i++)
+	{
+		pollfds[i].fd = ((int *)event_set->handles)[i];
 		pollfds[i].events = 0;
 		pollfds[i].revents = 0;
 		if (event_set->masks[i] & SP_EVENT_RX_READY)
@@ -1214,7 +1325,8 @@ SP_API enum sp_return sp_wait(struct sp_event_set *event_set,
 			pollfds[i].events |= POLLERR;
 	}
 
-	if (timeout) {
+	if (timeout)
+	{
 		/* Get time at start of operation. */
 		gettimeofday(&start, NULL);
 		/* Define duration of timeout. */
@@ -1227,9 +1339,11 @@ SP_API enum sp_return sp_wait(struct sp_event_set *event_set,
 	/* Loop until an event occurs. */
 	while (1)
 	{
-		if (timeout) {
+		if (timeout)
+		{
 			gettimeofday(&now, NULL);
-			if (timercmp(&now, &end, >)) {
+			if (timercmp(&now, &end, >))
+			{
 				DEBUG("wait timed out");
 				break;
 			}
@@ -1239,18 +1353,26 @@ SP_API enum sp_return sp_wait(struct sp_event_set *event_set,
 
 		result = poll(pollfds, event_set->count, timeout ? timeout_remaining : -1);
 
-		if (result < 0) {
-			if (errno == EINTR) {
+		if (result < 0)
+		{
+			if (errno == EINTR)
+			{
 				DEBUG("poll() call was interrupted, repeating");
 				continue;
-			} else {
+			}
+			else
+			{
 				free(pollfds);
 				RETURN_FAIL("poll() failed");
 			}
-		} else if (result == 0) {
+		}
+		else if (result == 0)
+		{
 			DEBUG("poll() timed out");
 			break;
-		} else {
+		}
+		else
+		{
 			DEBUG("poll() completed");
 			break;
 		}
@@ -1273,7 +1395,8 @@ static enum sp_return get_baudrate(int fd, int *baudrate)
 	if (!(data = malloc(get_termios_size())))
 		RETURN_ERROR(SP_ERR_MEM, "termios malloc failed");
 
-	if (ioctl(fd, get_termios_get_ioctl(), data) < 0) {
+	if (ioctl(fd, get_termios_get_ioctl(), data) < 0)
+	{
 		free(data);
 		RETURN_FAIL("getting termios failed");
 	}
@@ -1296,7 +1419,8 @@ static enum sp_return set_baudrate(int fd, int baudrate)
 	if (!(data = malloc(get_termios_size())))
 		RETURN_ERROR(SP_ERR_MEM, "termios malloc failed");
 
-	if (ioctl(fd, get_termios_get_ioctl(), data) < 0) {
+	if (ioctl(fd, get_termios_get_ioctl(), data) < 0)
+	{
 		free(data);
 		RETURN_FAIL("getting termios failed");
 	}
@@ -1305,7 +1429,8 @@ static enum sp_return set_baudrate(int fd, int baudrate)
 
 	set_termios_speed(data, baudrate);
 
-	if (ioctl(fd, get_termios_set_ioctl(), data) < 0) {
+	if (ioctl(fd, get_termios_set_ioctl(), data) < 0)
+	{
 		free(data);
 		RETURN_FAIL("setting termios failed");
 	}
@@ -1328,13 +1453,14 @@ static enum sp_return get_flow(int fd, struct port_data *data)
 	if (!(termx = malloc(get_termiox_size())))
 		RETURN_ERROR(SP_ERR_MEM, "termiox malloc failed");
 
-	if (ioctl(fd, TCGETX, termx) < 0) {
+	if (ioctl(fd, TCGETX, termx) < 0)
+	{
 		free(termx);
 		RETURN_FAIL("getting termiox failed");
 	}
 
 	get_termiox_flow(termx, &data->rts_flow, &data->cts_flow,
-			&data->dtr_flow, &data->dsr_flow);
+					 &data->dtr_flow, &data->dsr_flow);
 
 	free(termx);
 
@@ -1352,7 +1478,8 @@ static enum sp_return set_flow(int fd, struct port_data *data)
 	if (!(termx = malloc(get_termiox_size())))
 		RETURN_ERROR(SP_ERR_MEM, "termiox malloc failed");
 
-	if (ioctl(fd, TCGETX, termx) < 0) {
+	if (ioctl(fd, TCGETX, termx) < 0)
+	{
 		free(termx);
 		RETURN_FAIL("getting termiox failed");
 	}
@@ -1360,9 +1487,10 @@ static enum sp_return set_flow(int fd, struct port_data *data)
 	DEBUG("Setting advanced flow control");
 
 	set_termiox_flow(termx, data->rts_flow, data->cts_flow,
-			data->dtr_flow, data->dsr_flow);
+					 data->dtr_flow, data->dsr_flow);
 
-	if (ioctl(fd, TCSETX, termx) < 0) {
+	if (ioctl(fd, TCSETX, termx) < 0)
+	{
 		free(termx);
 		RETURN_FAIL("setting termiox failed");
 	}
@@ -1374,7 +1502,7 @@ static enum sp_return set_flow(int fd, struct port_data *data)
 #endif /* USE_TERMIOX */
 
 static enum sp_return get_config(struct sp_port *port, struct port_data *data,
-	struct sp_port_config *config)
+								 struct sp_port_config *config)
 {
 	unsigned int i;
 
@@ -1386,8 +1514,10 @@ static enum sp_return get_config(struct sp_port *port, struct port_data *data,
 	if (!GetCommState(port->hdl, &data->dcb))
 		RETURN_FAIL("GetCommState() failed");
 
-	for (i = 0; i < NUM_STD_BAUDRATES; i++) {
-		if (data->dcb.BaudRate == std_baudrates[i].index) {
+	for (i = 0; i < NUM_STD_BAUDRATES; i++)
+	{
+		if (data->dcb.BaudRate == std_baudrates[i].index)
+		{
 			config->baudrate = std_baudrates[i].value;
 			break;
 		}
@@ -1400,7 +1530,8 @@ static enum sp_return get_config(struct sp_port *port, struct port_data *data,
 	config->bits = data->dcb.ByteSize;
 
 	if (data->dcb.fParity)
-		switch (data->dcb.Parity) {
+		switch (data->dcb.Parity)
+		{
 		case NOPARITY:
 			config->parity = SP_PARITY_NONE;
 			break;
@@ -1422,7 +1553,8 @@ static enum sp_return get_config(struct sp_port *port, struct port_data *data,
 	else
 		config->parity = SP_PARITY_NONE;
 
-	switch (data->dcb.StopBits) {
+	switch (data->dcb.StopBits)
+	{
 	case ONESTOPBIT:
 		config->stopbits = 1;
 		break;
@@ -1433,7 +1565,8 @@ static enum sp_return get_config(struct sp_port *port, struct port_data *data,
 		config->stopbits = -1;
 	}
 
-	switch (data->dcb.fRtsControl) {
+	switch (data->dcb.fRtsControl)
+	{
 	case RTS_CONTROL_DISABLE:
 		config->rts = SP_RTS_OFF;
 		break;
@@ -1449,7 +1582,8 @@ static enum sp_return get_config(struct sp_port *port, struct port_data *data,
 
 	config->cts = data->dcb.fOutxCtsFlow ? SP_CTS_FLOW_CONTROL : SP_CTS_IGNORE;
 
-	switch (data->dcb.fDtrControl) {
+	switch (data->dcb.fDtrControl)
+	{
 	case DTR_CONTROL_DISABLE:
 		config->dtr = SP_DTR_OFF;
 		break;
@@ -1465,12 +1599,15 @@ static enum sp_return get_config(struct sp_port *port, struct port_data *data,
 
 	config->dsr = data->dcb.fOutxDsrFlow ? SP_DSR_FLOW_CONTROL : SP_DSR_IGNORE;
 
-	if (data->dcb.fInX) {
+	if (data->dcb.fInX)
+	{
 		if (data->dcb.fOutX)
 			config->xon_xoff = SP_XONXOFF_INOUT;
 		else
 			config->xon_xoff = SP_XONXOFF_IN;
-	} else {
+	}
+	else
+	{
 		if (data->dcb.fOutX)
 			config->xon_xoff = SP_XONXOFF_OUT;
 		else
@@ -1498,14 +1635,17 @@ static enum sp_return get_config(struct sp_port *port, struct port_data *data,
 	data->termiox_supported = 0;
 #endif
 
-	for (i = 0; i < NUM_STD_BAUDRATES; i++) {
-		if (cfgetispeed(&data->term) == std_baudrates[i].index) {
+	for (i = 0; i < NUM_STD_BAUDRATES; i++)
+	{
+		if (cfgetispeed(&data->term) == std_baudrates[i].index)
+		{
 			config->baudrate = std_baudrates[i].value;
 			break;
 		}
 	}
 
-	if (i == NUM_STD_BAUDRATES) {
+	if (i == NUM_STD_BAUDRATES)
+	{
 #ifdef __APPLE__
 		config->baudrate = (int)data->term.c_ispeed;
 #elif defined(USE_TERMIOS_SPEED)
@@ -1515,7 +1655,8 @@ static enum sp_return get_config(struct sp_port *port, struct port_data *data,
 #endif
 	}
 
-	switch (data->term.c_cflag & CSIZE) {
+	switch (data->term.c_cflag & CSIZE)
+	{
 	case CS8:
 		config->bits = 8;
 		break;
@@ -1545,17 +1686,19 @@ static enum sp_return get_config(struct sp_port *port, struct port_data *data,
 
 	config->stopbits = (data->term.c_cflag & CSTOPB) ? 2 : 1;
 
-	if (data->term.c_cflag & CRTSCTS) {
+	if (data->term.c_cflag & CRTSCTS)
+	{
 		config->rts = SP_RTS_FLOW_CONTROL;
 		config->cts = SP_CTS_FLOW_CONTROL;
-	} else {
+	}
+	else
+	{
 		if (data->termiox_supported && data->rts_flow)
 			config->rts = SP_RTS_FLOW_CONTROL;
 		else
 			config->rts = (data->controlbits & TIOCM_RTS) ? SP_RTS_ON : SP_RTS_OFF;
 
-		config->cts = (data->termiox_supported && data->cts_flow) ?
-			SP_CTS_FLOW_CONTROL : SP_CTS_IGNORE;
+		config->cts = (data->termiox_supported && data->cts_flow) ? SP_CTS_FLOW_CONTROL : SP_CTS_IGNORE;
 	}
 
 	if (data->termiox_supported && data->dtr_flow)
@@ -1563,15 +1706,17 @@ static enum sp_return get_config(struct sp_port *port, struct port_data *data,
 	else
 		config->dtr = (data->controlbits & TIOCM_DTR) ? SP_DTR_ON : SP_DTR_OFF;
 
-	config->dsr = (data->termiox_supported && data->dsr_flow) ?
-		SP_DSR_FLOW_CONTROL : SP_DSR_IGNORE;
+	config->dsr = (data->termiox_supported && data->dsr_flow) ? SP_DSR_FLOW_CONTROL : SP_DSR_IGNORE;
 
-	if (data->term.c_iflag & IXOFF) {
+	if (data->term.c_iflag & IXOFF)
+	{
 		if (data->term.c_iflag & IXON)
 			config->xon_xoff = SP_XONXOFF_INOUT;
 		else
 			config->xon_xoff = SP_XONXOFF_IN;
-	} else {
+	}
+	else
+	{
 		if (data->term.c_iflag & IXON)
 			config->xon_xoff = SP_XONXOFF_OUT;
 		else
@@ -1583,7 +1728,7 @@ static enum sp_return get_config(struct sp_port *port, struct port_data *data,
 }
 
 static enum sp_return set_config(struct sp_port *port, struct port_data *data,
-	const struct sp_port_config *config)
+								 const struct sp_port_config *config)
 {
 	unsigned int i;
 #ifdef __APPLE__
@@ -1600,9 +1745,12 @@ static enum sp_return set_config(struct sp_port *port, struct port_data *data,
 	DEBUG_FMT("Setting configuration for port %s", port->name);
 
 #ifdef _WIN32
-	if (config->baudrate >= 0) {
-		for (i = 0; i < NUM_STD_BAUDRATES; i++) {
-			if (config->baudrate == std_baudrates[i].value) {
+	if (config->baudrate >= 0)
+	{
+		for (i = 0; i < NUM_STD_BAUDRATES; i++)
+		{
+			if (config->baudrate == std_baudrates[i].value)
+			{
 				data->dcb.BaudRate = std_baudrates[i].index;
 				break;
 			}
@@ -1615,8 +1763,10 @@ static enum sp_return set_config(struct sp_port *port, struct port_data *data,
 	if (config->bits >= 0)
 		data->dcb.ByteSize = config->bits;
 
-	if (config->parity >= 0) {
-		switch (config->parity) {
+	if (config->parity >= 0)
+	{
+		switch (config->parity)
+		{
 		case SP_PARITY_NONE:
 			data->dcb.Parity = NOPARITY;
 			break;
@@ -1637,8 +1787,10 @@ static enum sp_return set_config(struct sp_port *port, struct port_data *data,
 		}
 	}
 
-	if (config->stopbits >= 0) {
-		switch (config->stopbits) {
+	if (config->stopbits >= 0)
+	{
+		switch (config->stopbits)
+		{
 		/* Note: There's also ONE5STOPBITS == 1.5 (unneeded so far). */
 		case 1:
 			data->dcb.StopBits = ONESTOPBIT;
@@ -1651,8 +1803,10 @@ static enum sp_return set_config(struct sp_port *port, struct port_data *data,
 		}
 	}
 
-	if (config->rts >= 0) {
-		switch (config->rts) {
+	if (config->rts >= 0)
+	{
+		switch (config->rts)
+		{
 		case SP_RTS_OFF:
 			data->dcb.fRtsControl = RTS_CONTROL_DISABLE;
 			break;
@@ -1667,8 +1821,10 @@ static enum sp_return set_config(struct sp_port *port, struct port_data *data,
 		}
 	}
 
-	if (config->cts >= 0) {
-		switch (config->cts) {
+	if (config->cts >= 0)
+	{
+		switch (config->cts)
+		{
 		case SP_CTS_IGNORE:
 			data->dcb.fOutxCtsFlow = FALSE;
 			break;
@@ -1680,8 +1836,10 @@ static enum sp_return set_config(struct sp_port *port, struct port_data *data,
 		}
 	}
 
-	if (config->dtr >= 0) {
-		switch (config->dtr) {
+	if (config->dtr >= 0)
+	{
+		switch (config->dtr)
+		{
 		case SP_DTR_OFF:
 			data->dcb.fDtrControl = DTR_CONTROL_DISABLE;
 			break;
@@ -1696,8 +1854,10 @@ static enum sp_return set_config(struct sp_port *port, struct port_data *data,
 		}
 	}
 
-	if (config->dsr >= 0) {
-		switch (config->dsr) {
+	if (config->dsr >= 0)
+	{
+		switch (config->dsr)
+		{
 		case SP_DSR_IGNORE:
 			data->dcb.fOutxDsrFlow = FALSE;
 			break;
@@ -1709,8 +1869,10 @@ static enum sp_return set_config(struct sp_port *port, struct port_data *data,
 		}
 	}
 
-	if (config->xon_xoff >= 0) {
-		switch (config->xon_xoff) {
+	if (config->xon_xoff >= 0)
+	{
+		switch (config->xon_xoff)
+		{
 		case SP_XONXOFF_DISABLED:
 			data->dcb.fInX = FALSE;
 			data->dcb.fOutX = FALSE;
@@ -1739,9 +1901,12 @@ static enum sp_return set_config(struct sp_port *port, struct port_data *data,
 
 	int controlbits;
 
-	if (config->baudrate >= 0) {
-		for (i = 0; i < NUM_STD_BAUDRATES; i++) {
-			if (config->baudrate == std_baudrates[i].value) {
+	if (config->baudrate >= 0)
+	{
+		for (i = 0; i < NUM_STD_BAUDRATES; i++)
+		{
+			if (config->baudrate == std_baudrates[i].value)
+			{
 				if (cfsetospeed(&data->term, std_baudrates[i].index) < 0)
 					RETURN_FAIL("cfsetospeed() failed");
 
@@ -1752,7 +1917,8 @@ static enum sp_return set_config(struct sp_port *port, struct port_data *data,
 		}
 
 		/* Non-standard baud rate */
-		if (i == NUM_STD_BAUDRATES) {
+		if (i == NUM_STD_BAUDRATES)
+		{
 #ifdef __APPLE__
 			/* Set "dummy" baud rate. */
 			if (cfsetspeed(&data->term, B9600) < 0)
@@ -1766,9 +1932,11 @@ static enum sp_return set_config(struct sp_port *port, struct port_data *data,
 		}
 	}
 
-	if (config->bits >= 0) {
+	if (config->bits >= 0)
+	{
 		data->term.c_cflag &= ~CSIZE;
-		switch (config->bits) {
+		switch (config->bits)
+		{
 		case 8:
 			data->term.c_cflag |= CS8;
 			break;
@@ -1786,13 +1954,15 @@ static enum sp_return set_config(struct sp_port *port, struct port_data *data,
 		}
 	}
 
-	if (config->parity >= 0) {
+	if (config->parity >= 0)
+	{
 		data->term.c_iflag &= ~IGNPAR;
 		data->term.c_cflag &= ~(PARENB | PARODD);
 #ifdef CMSPAR
 		data->term.c_cflag &= ~CMSPAR;
 #endif
-		switch (config->parity) {
+		switch (config->parity)
+		{
 		case SP_PARITY_NONE:
 			data->term.c_iflag |= IGNPAR;
 			break;
@@ -1821,9 +1991,11 @@ static enum sp_return set_config(struct sp_port *port, struct port_data *data,
 		}
 	}
 
-	if (config->stopbits >= 0) {
+	if (config->stopbits >= 0)
+	{
 		data->term.c_cflag &= ~CSTOPB;
-		switch (config->stopbits) {
+		switch (config->stopbits)
+		{
 		case 1:
 			data->term.c_cflag &= ~CSTOPB;
 			break;
@@ -1835,10 +2007,13 @@ static enum sp_return set_config(struct sp_port *port, struct port_data *data,
 		}
 	}
 
-	if (config->rts >= 0 || config->cts >= 0) {
-		if (data->termiox_supported) {
+	if (config->rts >= 0 || config->cts >= 0)
+	{
+		if (data->termiox_supported)
+		{
 			data->rts_flow = data->cts_flow = 0;
-			switch (config->rts) {
+			switch (config->rts)
+			{
 			case SP_RTS_OFF:
 			case SP_RTS_ON:
 				controlbits = TIOCM_RTS;
@@ -1858,42 +2033,56 @@ static enum sp_return set_config(struct sp_port *port, struct port_data *data,
 				data->term.c_iflag |= CRTSCTS;
 			else
 				data->term.c_iflag &= ~CRTSCTS;
-		} else {
+		}
+		else
+		{
 			/* Asymmetric use of RTS/CTS not supported. */
-			if (data->term.c_iflag & CRTSCTS) {
+			if (data->term.c_iflag & CRTSCTS)
+			{
 				/* Flow control can only be disabled for both RTS & CTS together. */
-				if (config->rts >= 0 && config->rts != SP_RTS_FLOW_CONTROL) {
+				if (config->rts >= 0 && config->rts != SP_RTS_FLOW_CONTROL)
+				{
 					if (config->cts != SP_CTS_IGNORE)
 						RETURN_ERROR(SP_ERR_SUPP, "RTS & CTS flow control must be disabled together");
 				}
-				if (config->cts >= 0 && config->cts != SP_CTS_FLOW_CONTROL) {
+				if (config->cts >= 0 && config->cts != SP_CTS_FLOW_CONTROL)
+				{
 					if (config->rts <= 0 || config->rts == SP_RTS_FLOW_CONTROL)
 						RETURN_ERROR(SP_ERR_SUPP, "RTS & CTS flow control must be disabled together");
 				}
-			} else {
+			}
+			else
+			{
 				/* Flow control can only be enabled for both RTS & CTS together. */
 				if (((config->rts == SP_RTS_FLOW_CONTROL) && (config->cts != SP_CTS_FLOW_CONTROL)) ||
 					((config->cts == SP_CTS_FLOW_CONTROL) && (config->rts != SP_RTS_FLOW_CONTROL)))
 					RETURN_ERROR(SP_ERR_SUPP, "RTS & CTS flow control must be enabled together");
 			}
 
-			if (config->rts >= 0) {
-				if (config->rts == SP_RTS_FLOW_CONTROL) {
+			if (config->rts >= 0)
+			{
+				if (config->rts == SP_RTS_FLOW_CONTROL)
+				{
 					data->term.c_iflag |= CRTSCTS;
-				} else {
+				}
+				else
+				{
 					controlbits = TIOCM_RTS;
 					if (ioctl(port->fd, config->rts == SP_RTS_ON ? TIOCMBIS : TIOCMBIC,
-							&controlbits) < 0)
+							  &controlbits) < 0)
 						RETURN_FAIL("Setting RTS signal level failed");
 				}
 			}
 		}
 	}
 
-	if (config->dtr >= 0 || config->dsr >= 0) {
-		if (data->termiox_supported) {
+	if (config->dtr >= 0 || config->dsr >= 0)
+	{
+		if (data->termiox_supported)
+		{
 			data->dtr_flow = data->dsr_flow = 0;
-			switch (config->dtr) {
+			switch (config->dtr)
+			{
 			case SP_DTR_OFF:
 			case SP_DTR_ON:
 				controlbits = TIOCM_DTR;
@@ -1908,23 +2097,28 @@ static enum sp_return set_config(struct sp_port *port, struct port_data *data,
 			}
 			if (config->dsr == SP_DSR_FLOW_CONTROL)
 				data->dsr_flow = 1;
-		} else {
+		}
+		else
+		{
 			/* DTR/DSR flow control not supported. */
 			if (config->dtr == SP_DTR_FLOW_CONTROL || config->dsr == SP_DSR_FLOW_CONTROL)
 				RETURN_ERROR(SP_ERR_SUPP, "DTR/DSR flow control not supported");
 
-			if (config->dtr >= 0) {
+			if (config->dtr >= 0)
+			{
 				controlbits = TIOCM_DTR;
 				if (ioctl(port->fd, config->dtr == SP_DTR_ON ? TIOCMBIS : TIOCMBIC,
-						&controlbits) < 0)
+						  &controlbits) < 0)
 					RETURN_FAIL("Setting DTR signal level failed");
 			}
 		}
 	}
 
-	if (config->xon_xoff >= 0) {
+	if (config->xon_xoff >= 0)
+	{
 		data->term.c_iflag &= ~(IXON | IXOFF | IXANY);
-		switch (config->xon_xoff) {
+		switch (config->xon_xoff)
+		{
 		case SP_XONXOFF_DISABLED:
 			break;
 		case SP_XONXOFF_IN:
@@ -1945,7 +2139,8 @@ static enum sp_return set_config(struct sp_port *port, struct port_data *data,
 		RETURN_FAIL("tcsetattr() failed");
 
 #ifdef __APPLE__
-	if (baud_nonstd != B0) {
+	if (baud_nonstd != B0)
+	{
 		if (ioctl(port->fd, IOSSIOSPEED, &baud_nonstd) == -1)
 			RETURN_FAIL("IOSSIOSPEED ioctl failed");
 		/* Set baud rates in data->term to correct, but incompatible
@@ -2010,7 +2205,7 @@ SP_API void sp_free_config(struct sp_port_config *config)
 }
 
 SP_API enum sp_return sp_get_config(struct sp_port *port,
-                                    struct sp_port_config *config)
+									struct sp_port_config *config)
 {
 	struct port_data data;
 
@@ -2027,7 +2222,7 @@ SP_API enum sp_return sp_get_config(struct sp_port *port,
 }
 
 SP_API enum sp_return sp_set_config(struct sp_port *port,
-                                    const struct sp_port_config *config)
+									const struct sp_port_config *config)
 {
 	struct port_data data;
 	struct sp_port_config prev_config;
@@ -2045,33 +2240,36 @@ SP_API enum sp_return sp_set_config(struct sp_port *port,
 	RETURN_OK();
 }
 
-#define CREATE_ACCESSORS(x, type) \
-SP_API enum sp_return sp_set_##x(struct sp_port *port, type x) { \
-	struct port_data data; \
-	struct sp_port_config config; \
-	TRACE("%p, %d", port, x); \
-	CHECK_OPEN_PORT(); \
-	TRY(get_config(port, &data, &config)); \
-	config.x = x; \
-	TRY(set_config(port, &data, &config)); \
-	RETURN_OK(); \
-} \
-SP_API enum sp_return sp_get_config_##x(const struct sp_port_config *config, \
-                                        type *x) { \
-	TRACE("%p, %p", config, x); \
-	if (!config) \
-		RETURN_ERROR(SP_ERR_ARG, "Null config"); \
-	*x = config->x; \
-	RETURN_OK(); \
-} \
-SP_API enum sp_return sp_set_config_##x(struct sp_port_config *config, \
-                                        type x) { \
-	TRACE("%p, %d", config, x); \
-	if (!config) \
-		RETURN_ERROR(SP_ERR_ARG, "Null config"); \
-	config->x = x; \
-	RETURN_OK(); \
-}
+#define CREATE_ACCESSORS(x, type)                                                \
+	SP_API enum sp_return sp_set_##x(struct sp_port *port, type x)               \
+	{                                                                            \
+		struct port_data data;                                                   \
+		struct sp_port_config config;                                            \
+		TRACE("%p, %d", port, x);                                                \
+		CHECK_OPEN_PORT();                                                       \
+		TRY(get_config(port, &data, &config));                                   \
+		config.x = x;                                                            \
+		TRY(set_config(port, &data, &config));                                   \
+		RETURN_OK();                                                             \
+	}                                                                            \
+	SP_API enum sp_return sp_get_config_##x(const struct sp_port_config *config, \
+											type *x)                             \
+	{                                                                            \
+		TRACE("%p, %p", config, x);                                              \
+		if (!config)                                                             \
+			RETURN_ERROR(SP_ERR_ARG, "Null config");                             \
+		*x = config->x;                                                          \
+		RETURN_OK();                                                             \
+	}                                                                            \
+	SP_API enum sp_return sp_set_config_##x(struct sp_port_config *config,       \
+											type x)                              \
+	{                                                                            \
+		TRACE("%p, %d", config, x);                                              \
+		if (!config)                                                             \
+			RETURN_ERROR(SP_ERR_ARG, "Null config");                             \
+		config->x = x;                                                           \
+		RETURN_OK();                                                             \
+	}
 
 CREATE_ACCESSORS(baudrate, int)
 CREATE_ACCESSORS(bits, int)
@@ -2084,7 +2282,7 @@ CREATE_ACCESSORS(dsr, enum sp_dsr)
 CREATE_ACCESSORS(xon_xoff, enum sp_xonxoff)
 
 SP_API enum sp_return sp_set_config_flowcontrol(struct sp_port_config *config,
-                                                enum sp_flowcontrol flowcontrol)
+												enum sp_flowcontrol flowcontrol)
 {
 	if (!config)
 		RETURN_ERROR(SP_ERR_ARG, "Null configuration");
@@ -2097,19 +2295,25 @@ SP_API enum sp_return sp_set_config_flowcontrol(struct sp_port_config *config,
 	else
 		config->xon_xoff = SP_XONXOFF_DISABLED;
 
-	if (flowcontrol == SP_FLOWCONTROL_RTSCTS) {
+	if (flowcontrol == SP_FLOWCONTROL_RTSCTS)
+	{
 		config->rts = SP_RTS_FLOW_CONTROL;
 		config->cts = SP_CTS_FLOW_CONTROL;
-	} else {
+	}
+	else
+	{
 		if (config->rts == SP_RTS_FLOW_CONTROL)
 			config->rts = SP_RTS_ON;
 		config->cts = SP_CTS_IGNORE;
 	}
 
-	if (flowcontrol == SP_FLOWCONTROL_DTRDSR) {
+	if (flowcontrol == SP_FLOWCONTROL_DTRDSR)
+	{
 		config->dtr = SP_DTR_FLOW_CONTROL;
 		config->dsr = SP_DSR_FLOW_CONTROL;
-	} else {
+	}
+	else
+	{
 		if (config->dtr == SP_DTR_FLOW_CONTROL)
 			config->dtr = SP_DTR_ON;
 		config->dsr = SP_DSR_IGNORE;
@@ -2119,7 +2323,7 @@ SP_API enum sp_return sp_set_config_flowcontrol(struct sp_port_config *config,
 }
 
 SP_API enum sp_return sp_set_flowcontrol(struct sp_port *port,
-                                         enum sp_flowcontrol flowcontrol)
+										 enum sp_flowcontrol flowcontrol)
 {
 	struct port_data data;
 	struct sp_port_config config;
@@ -2138,7 +2342,7 @@ SP_API enum sp_return sp_set_flowcontrol(struct sp_port *port,
 }
 
 SP_API enum sp_return sp_get_signals(struct sp_port *port,
-                                     enum sp_signal *signals)
+									 enum sp_signal *signals)
 {
 	TRACE("%p, %p", port, signals);
 
@@ -2230,13 +2434,13 @@ SP_API char *sp_last_error_message(void)
 
 	FormatMessage(
 		FORMAT_MESSAGE_ALLOCATE_BUFFER |
-		FORMAT_MESSAGE_FROM_SYSTEM |
-		FORMAT_MESSAGE_IGNORE_INSERTS,
+			FORMAT_MESSAGE_FROM_SYSTEM |
+			FORMAT_MESSAGE_IGNORE_INSERTS,
 		NULL,
 		error,
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		(LPTSTR) &message,
-		0, NULL );
+		(LPTSTR)&message,
+		0, NULL);
 
 	RETURN_STRING(message);
 #else
@@ -2270,7 +2474,8 @@ SP_API void sp_default_debug_handler(const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);
-	if (getenv("LIBSERIALPORT_DEBUG")) {
+	if (getenv("LIBSERIALPORT_DEBUG"))
+	{
 		fputs("sp: ", stderr);
 		vfprintf(stderr, format, args);
 	}
