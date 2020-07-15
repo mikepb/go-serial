@@ -33,7 +33,8 @@
  * TCSETX/TCGETX ioctls used with struct termiox, others do not.
  */
 
-#include <config.h>
+#ifdef __linux__
+
 #include <stdlib.h>
 #include <linux/termios.h>
 #include "linux_termios.h"
@@ -69,9 +70,9 @@ SP_PRIV size_t get_termios_size(void)
 SP_PRIV int get_termios_speed(void *data)
 {
 #ifdef HAVE_STRUCT_TERMIOS2
-	struct termios2 *term = (struct termios2 *) data;
+	struct termios2 *term = (struct termios2 *)data;
 #else
-	struct termios *term = (struct termios *) data;
+	struct termios *term = (struct termios *)data;
 #endif
 	if (term->c_ispeed != term->c_ospeed)
 		return -1;
@@ -82,9 +83,9 @@ SP_PRIV int get_termios_speed(void *data)
 SP_PRIV void set_termios_speed(void *data, int speed)
 {
 #ifdef HAVE_STRUCT_TERMIOS2
-	struct termios2 *term = (struct termios2 *) data;
+	struct termios2 *term = (struct termios2 *)data;
 #else
-	struct termios *term = (struct termios *) data;
+	struct termios *term = (struct termios *)data;
 #endif
 	term->c_cflag &= ~CBAUD;
 	term->c_cflag |= BOTHER;
@@ -100,7 +101,7 @@ SP_PRIV size_t get_termiox_size(void)
 
 SP_PRIV int get_termiox_flow(void *data, int *rts, int *cts, int *dtr, int *dsr)
 {
-	struct termiox *termx = (struct termiox *) data;
+	struct termiox *termx = (struct termiox *)data;
 	int flags = 0;
 
 	*rts = (termx->x_cflag & RTSXOFF);
@@ -113,7 +114,7 @@ SP_PRIV int get_termiox_flow(void *data, int *rts, int *cts, int *dtr, int *dsr)
 
 SP_PRIV void set_termiox_flow(void *data, int rts, int cts, int dtr, int dsr)
 {
-	struct termiox *termx = (struct termiox *) data;
+	struct termiox *termx = (struct termiox *)data;
 
 	termx->x_cflag &= ~(RTSXOFF | CTSXON | DTRXOFF | DSRXON);
 
@@ -126,4 +127,6 @@ SP_PRIV void set_termiox_flow(void *data, int rts, int cts, int dtr, int dsr)
 	if (dsr)
 		termx->x_cflag |= DSRXON;
 }
+#endif
+
 #endif

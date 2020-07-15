@@ -18,7 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <config.h>
+#ifdef __linux__
+
 #include "libserialport.h"
 #include "libserialport_internal.h"
 
@@ -69,8 +70,10 @@ SP_PRIV enum sp_return get_port_details(struct sp_port *port)
 	else if (strstr(file_name, "usb"))
 		port->transport = SP_TRANSPORT_USB;
 
-	if (port->transport == SP_TRANSPORT_USB) {
-		for (i = 0; i < 5; i++) {
+	if (port->transport == SP_TRANSPORT_USB)
+	{
+		for (i = 0; i < 5; i++)
+		{
 			strcat(sub_dir, "../");
 
 			snprintf(file_name, sizeof(file_name), dir_name, dev, sub_dir, "busnum");
@@ -111,8 +114,10 @@ SP_PRIV enum sp_return get_port_details(struct sp_port *port)
 			port->usb_pid = pid;
 
 			snprintf(file_name, sizeof(file_name), dir_name, dev, sub_dir, "product");
-			if ((file = fopen_cloexec_rdonly(file_name))) {
-				if ((ptr = fgets(description, sizeof(description), file))) {
+			if ((file = fopen_cloexec_rdonly(file_name)))
+			{
+				if ((ptr = fgets(description, sizeof(description), file)))
+				{
 					ptr = description + strlen(description) - 1;
 					if (ptr >= description && *ptr == '\n')
 						*ptr = 0;
@@ -124,8 +129,10 @@ SP_PRIV enum sp_return get_port_details(struct sp_port *port)
 				port->description = strdup(dev);
 
 			snprintf(file_name, sizeof(file_name), dir_name, dev, sub_dir, "manufacturer");
-			if ((file = fopen_cloexec_rdonly(file_name))) {
-				if ((ptr = fgets(manufacturer, sizeof(manufacturer), file))) {
+			if ((file = fopen_cloexec_rdonly(file_name)))
+			{
+				if ((ptr = fgets(manufacturer, sizeof(manufacturer), file)))
+				{
 					ptr = manufacturer + strlen(manufacturer) - 1;
 					if (ptr >= manufacturer && *ptr == '\n')
 						*ptr = 0;
@@ -135,8 +142,10 @@ SP_PRIV enum sp_return get_port_details(struct sp_port *port)
 			}
 
 			snprintf(file_name, sizeof(file_name), dir_name, dev, sub_dir, "product");
-			if ((file = fopen_cloexec_rdonly(file_name))) {
-				if ((ptr = fgets(product, sizeof(product), file))) {
+			if ((file = fopen_cloexec_rdonly(file_name)))
+			{
+				if ((ptr = fgets(product, sizeof(product), file)))
+				{
 					ptr = product + strlen(product) - 1;
 					if (ptr >= product && *ptr == '\n')
 						*ptr = 0;
@@ -146,8 +155,10 @@ SP_PRIV enum sp_return get_port_details(struct sp_port *port)
 			}
 
 			snprintf(file_name, sizeof(file_name), dir_name, dev, sub_dir, "serial");
-			if ((file = fopen_cloexec_rdonly(file_name))) {
-				if ((ptr = fgets(serial, sizeof(serial), file))) {
+			if ((file = fopen_cloexec_rdonly(file_name)))
+			{
+				if ((ptr = fgets(serial, sizeof(serial), file)))
+				{
 					ptr = serial + strlen(serial) - 1;
 					if (ptr >= serial && *ptr == '\n')
 						*ptr = 0;
@@ -157,9 +168,10 @@ SP_PRIV enum sp_return get_port_details(struct sp_port *port)
 			}
 
 			/* If present, add serial to description for better identification. */
-			if (port->usb_serial && strlen(port->usb_serial)) {
+			if (port->usb_serial && strlen(port->usb_serial))
+			{
 				snprintf(description, sizeof(description),
-					"%s - %s", port->description, port->usb_serial);
+						 "%s - %s", port->description, port->usb_serial);
 				if (port->description)
 					free(port->description);
 				port->description = strdup(description);
@@ -167,13 +179,18 @@ SP_PRIV enum sp_return get_port_details(struct sp_port *port)
 
 			break;
 		}
-	} else {
+	}
+	else
+	{
 		port->description = strdup(dev);
 
-		if (port->transport == SP_TRANSPORT_BLUETOOTH) {
+		if (port->transport == SP_TRANSPORT_BLUETOOTH)
+		{
 			snprintf(file_name, sizeof(file_name), dir_name, dev, "", "address");
-			if ((file = fopen_cloexec_rdonly(file_name))) {
-				if ((ptr = fgets(baddr, sizeof(baddr), file))) {
+			if ((file = fopen_cloexec_rdonly(file_name)))
+			{
+				if ((ptr = fgets(baddr, sizeof(baddr), file)))
+				{
 					ptr = baddr + strlen(baddr) - 1;
 					if (ptr >= baddr && *ptr == '\n')
 						*ptr = 0;
@@ -206,7 +223,8 @@ SP_PRIV enum sp_return list_ports(struct sp_port ***list)
 		RETURN_FAIL("Could not open /sys/class/tty");
 
 	DEBUG("Iterating over results");
-	while ((entry = readdir(dir))) {
+	while ((entry = readdir(dir)))
+	{
 		snprintf(buf, sizeof(buf), "/sys/class/tty/%s", entry->d_name);
 		if (lstat(buf, &statbuf) == -1)
 			continue;
@@ -220,14 +238,16 @@ SP_PRIV enum sp_return list_ports(struct sp_port ***list)
 			continue;
 		snprintf(name, sizeof(name), "/dev/%s", entry->d_name);
 		DEBUG_FMT("Found device %s", name);
-		if (strstr(target, "serial8250")) {
+		if (strstr(target, "serial8250"))
+		{
 			/*
 			 * The serial8250 driver has a hardcoded number of ports.
 			 * The only way to tell which actually exist on a given system
 			 * is to try to open them and make an ioctl call.
 			 */
 			DEBUG("serial8250 device, attempting to open");
-			if ((fd = open(name, O_RDWR | O_NONBLOCK | O_NOCTTY | O_CLOEXEC)) < 0) {
+			if ((fd = open(name, O_RDWR | O_NONBLOCK | O_NOCTTY | O_CLOEXEC)) < 0)
+			{
 				DEBUG("Open failed, skipping");
 				continue;
 			}
@@ -236,11 +256,13 @@ SP_PRIV enum sp_return list_ports(struct sp_port ***list)
 #endif
 			close(fd);
 #ifdef HAVE_STRUCT_SERIAL_STRUCT
-			if (ioctl_result != 0) {
+			if (ioctl_result != 0)
+			{
 				DEBUG("ioctl failed, skipping");
 				continue;
 			}
-			if (serial_info.type == PORT_UNKNOWN) {
+			if (serial_info.type == PORT_UNKNOWN)
+			{
 				DEBUG("Port type is unknown, skipping");
 				continue;
 			}
@@ -248,7 +270,8 @@ SP_PRIV enum sp_return list_ports(struct sp_port ***list)
 		}
 		DEBUG_FMT("Found port %s", name);
 		*list = list_append(*list, name);
-		if (!*list) {
+		if (!*list)
+		{
 			SET_ERROR(ret, SP_ERR_MEM, "List append failed");
 			break;
 		}
@@ -257,3 +280,5 @@ SP_PRIV enum sp_return list_ports(struct sp_port ***list)
 
 	return ret;
 }
+
+#endif
