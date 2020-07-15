@@ -17,8 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef __linux__
-
 #ifndef LIBSERIALPORT_LINUX_TERMIOS_H
 #define LIBSERIALPORT_LINUX_TERMIOS_H
 
@@ -32,7 +30,5 @@ SP_PRIV void set_termios_speed(void *data, int speed);
 SP_PRIV size_t get_termiox_size(void);
 SP_PRIV int get_termiox_flow(void *data, int *rts, int *cts, int *dtr, int *dsr);
 SP_PRIV void set_termiox_flow(void *data, int rts, int cts, int dtr, int dsr);
-
-#endif
 
 #endif
