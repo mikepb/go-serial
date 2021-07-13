@@ -39,7 +39,8 @@ const struct std_baudrate std_baudrates[] = {
 	BAUD(9600), BAUD(19200), BAUD(38400), BAUD(57600), BAUD(115200),
 	BAUD(230400),
 #if !defined(__APPLE__) && !defined(__OpenBSD__)
-	BAUD(460800),
+	BAUD(460800),BAUD(1500000),BAUD(750000),BAUD(500000),BAUD(375000),
+    BAUD(250000),BAUD(187500),BAUD(150000),
 #endif
 #endif
 };
